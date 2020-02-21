@@ -13,7 +13,7 @@ using namespace std;
 // read grammar
 void ReadGrammar()
 {
-    //push test
+    //push tests
     cout << "0\n";
 }
 
