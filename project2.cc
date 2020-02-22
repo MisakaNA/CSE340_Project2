@@ -6,17 +6,21 @@
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
+#include <algorithm>
 #include <vector>
-#include "string"
 #include <map>
+#include "string"
 #include "lexer.h"
 
 using namespace std;
 vector<pair<string, vector<string>>> ruleList;
 vector<string> rhs;
 vector<string> lhs;
+vector<string> terminals;
+vector<string> nonTerminals;
 string symbols[100];
-map<int, vector<int>> grammar;
+int usefulSize = 0;
+map<string, int> map;
 LexicalAnalyzer lexer;
 Token t;
 
@@ -27,15 +31,23 @@ void parse_Id_list();
 
 void parse_Rule_list(){
     t = lexer.GetToken();
-    lexer.UngetToken(t);
+
     if(t.token_type == ID){
+        string getLexeme = t.lexeme;
+        lexer.UngetToken(t);
         parse_Rule();
-        ruleList.push_back(make_pair(t.lexeme, rhs));
+
+        ruleList.push_back(make_pair(getLexeme, rhs));
         rhs.clear();
+
         t = lexer.GetToken();
         lexer.UngetToken(t);
         if(t.token_type == ID){
             parse_Rule_list();
+        }else if(t.token_type == DOUBLEHASH){
+            return;
+        }else{
+            //syntax_error();
         }
     }else{
         //syntax_error();
@@ -45,7 +57,10 @@ void parse_Rule_list(){
 void parse_Rule(){
     t = lexer.GetToken();
     if(t.token_type == ID){
-        lhs.push_back(t.lexeme);
+        if(find(lhs.begin(), lhs.end(), t.lexeme) == lhs.end()){
+            lhs.push_back(t.lexeme);
+        }
+
         t = lexer.GetToken();
         if(t.token_type == ARROW){
             parse_Right_hand_side();
@@ -98,24 +113,56 @@ void parse_Id_list() {
 void ReadGrammar()
 {
     parse_Rule_list();
+
+    for(auto &i : ruleList){
+        if(find(nonTerminals.begin(), nonTerminals.end(), i.first) == nonTerminals.end()){
+            nonTerminals.push_back(i.first);
+        }
+
+        for(auto &j : i.second){
+            if(find(lhs.begin(), lhs.end(), j) == lhs.end()){
+                if(find(terminals.begin(), terminals.end(), j) == terminals.end()){
+                    terminals.push_back(j);
+                }
+            }else{
+                if(find(nonTerminals.begin(), nonTerminals.end(), j) == nonTerminals.end()){
+                    nonTerminals.push_back(j);
+                }
+            }
+        }
+    }
+
     symbols[0] = "#";
     symbols[1] = "$";
-
-    for(auto &i : rhs){
-
+    usefulSize += 2;
+    for(int i = 0; i < terminals.size(); i++){
+        symbols[i+2] = terminals[i];
+        usefulSize++;
     }
-    cout << "0\n";
+    for(auto &i : nonTerminals) {
+        symbols[usefulSize++] = i;
+    }
 }
 
 // Task 1
 void printTerminalsAndNoneTerminals()
 {
-    cout << "1\n";
+    string output;
+    for(auto &i : terminals){
+        output += i + " ";
+    }
+    output += " ";
+    for(auto &i : nonTerminals) {
+        output += i + " ";
+    }
+
+    cout << output <<endl;
 }
 
 // Task 2
 void RemoveUselessSymbols()
 {
+
     cout << "2\n";
 }
 

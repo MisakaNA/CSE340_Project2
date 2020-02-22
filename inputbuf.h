@@ -7,6 +7,7 @@
 #define __INPUT_BUFFER__H__
 
 #include <string>
+#include <vector>
 
 class InputBuffer {
   public:
