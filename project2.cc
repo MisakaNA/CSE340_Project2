@@ -6,14 +6,104 @@
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
+#include <vector>
+#include "string"
+#include <map>
 #include "lexer.h"
 
 using namespace std;
+vector<pair<string, vector<string>>> ruleList;
+vector<string> rhs;
+vector<string> lhs;
+string symbols[100];
+map<int, vector<int>> grammar;
+LexicalAnalyzer lexer;
+Token t;
+
+void parse_Rule_list();
+void parse_Rule();
+void parse_Right_hand_side();
+void parse_Id_list();
+
+void parse_Rule_list(){
+    t = lexer.GetToken();
+    lexer.UngetToken(t);
+    if(t.token_type == ID){
+        parse_Rule();
+        ruleList.push_back(make_pair(t.lexeme, rhs));
+        rhs.clear();
+        t = lexer.GetToken();
+        lexer.UngetToken(t);
+        if(t.token_type == ID){
+            parse_Rule_list();
+        }
+    }else{
+        //syntax_error();
+    }
+}
+
+void parse_Rule(){
+    t = lexer.GetToken();
+    if(t.token_type == ID){
+        lhs.push_back(t.lexeme);
+        t = lexer.GetToken();
+        if(t.token_type == ARROW){
+            parse_Right_hand_side();
+            t = lexer.GetToken();
+            if(t.token_type != HASH){
+                //syntax_error();
+            }
+        }else{
+            //syntax_error();
+        }
+    }else{
+        //syntax_error();
+    }
+}
+
+void parse_Right_hand_side() {
+    t = lexer.GetToken();
+    if(t.token_type == ID) {
+        rhs.push_back(t.lexeme);
+
+        t = lexer.GetToken();
+        lexer.UngetToken(t);
+        if (t.token_type == ID) {
+            parse_Id_list();
+        }
+    }else if(t.token_type == HASH){
+        lexer.UngetToken(t);
+    }else{
+        //syntax_error();
+    }
+}
+
+void parse_Id_list() {
+    t = lexer.GetToken();
+    if(t.token_type == ID){
+        rhs.push_back(t.lexeme);
+
+        t = lexer.GetToken();
+        lexer.UngetToken(t);
+        if(t.token_type == ID){
+            parse_Id_list();
+        }
+    }else {
+        //syntax_error();
+    }
+}
+
 
 // read grammar
 void ReadGrammar()
 {
-    //push tests
+    parse_Rule_list();
+    symbols[0] = "#";
+    symbols[1] = "$";
+
+    for(auto &i : rhs){
+
+    }
     cout << "0\n";
 }
 
@@ -46,11 +136,12 @@ void CheckIfGrammarHasPredictiveParser()
 {
     cout << "5\n";
 }
+
+
     
 int main (int argc, char* argv[])
 {
     int task;
-
     if (argc < 2)
     {
         cout << "Error: missing argument\n";
