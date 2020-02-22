@@ -19,7 +19,7 @@ vector<string> lhs;
 vector<string> terminals;
 vector<string> nonTerminals;
 string symbols[100];
-int usefulSize = 0;
+int symbolSize = 0;
 map<string, int> map;
 LexicalAnalyzer lexer;
 Token t;
@@ -134,13 +134,13 @@ void ReadGrammar()
 
     symbols[0] = "#";
     symbols[1] = "$";
-    usefulSize += 2;
+    symbolSize += 2;
     for(int i = 0; i < terminals.size(); i++){
         symbols[i+2] = terminals[i];
-        usefulSize++;
+        symbolSize++;
     }
     for(auto &i : nonTerminals) {
-        symbols[usefulSize++] = i;
+        symbols[symbolSize++] = i;
     }
 }
 
@@ -162,7 +162,14 @@ void printTerminalsAndNoneTerminals()
 // Task 2
 void RemoveUselessSymbols()
 {
-
+    bool usefulSymbols[symbolSize];
+    usefulSymbols[0] = true;
+    for(int i = 0; i < symbolSize; i++){
+        if(find(terminals.begin(), terminals.end(), symbols[i]) != terminals.end()){
+            usefulSymbols[i] = true;
+        }
+    }
+    //usefulSymbols[distance(symbols, find(symbols, symbols + symbolSize, ruleList[0].first))] = true;
     cout << "2\n";
 }
 
