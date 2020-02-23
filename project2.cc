@@ -14,6 +14,7 @@
 
 using namespace std;
 vector<pair<string, vector<string>>> ruleList;
+
 vector<string> rhs;
 vector<string> lhs;
 vector<string> terminals;
@@ -159,23 +160,86 @@ void printTerminalsAndNoneTerminals()
     cout << output <<endl;
 }
 
-// Task 2
-void RemoveUselessSymbols()
-{
-    bool usefulSymbols[symbolSize];
-    usefulSymbols[0] = true;
+
+bool checkEqual(const bool arr1[], const bool arr2[]){
     for(int i = 0; i < symbolSize; i++){
-        if(find(terminals.begin(), terminals.end(), symbols[i]) != terminals.end()){
-            usefulSymbols[i] = true;
+        if(arr1[i] != arr2[i]){
+            return false;
         }
     }
-    //usefulSymbols[distance(symbols, find(symbols, symbols + symbolSize, ruleList[0].first))] = true;
+    return true;
+}
+
+bool gen = false;
+void isGenerate(bool *useless){
+    //save current one
+    bool prev[symbolSize];
+    for(int i = 0; i < symbolSize; i++){
+        prev[i] = useless[i];
+    }
+
+    //setGenerate(useless);
 
     for(auto &i : ruleList){
-        if(i.second.empty()||(i.second.size() == 1 && find(terminals.begin(), terminals.end(), i.second[0]) != terminals.end())){
-            usefulSymbols[distance(symbols, find(symbols, symbols + symbolSize, i.first))] = true;
+        //go through rule body vector
+        for(auto &j : i.second){
+            //check is there any element not true in usefulSymbol
+            int index = distance(symbols, find(symbols, symbols + symbolSize, j));
+            if(useless[index]){
+                gen = true;
+            }else{
+                //one ungenerating element means whole rule ungenerating
+                gen = false;
+                break;
+            }
+        }
+
+        //check if all generating or empty (empty means there is only one epsilon) and sign to true in usefulSymbol
+        if(i.second.empty()|| gen){
+            int index = distance(symbols, find(symbols, symbols + symbolSize, i.first));
+            useless[index] = true;
         }
     }
+
+    if(!checkEqual(prev, useless)){
+        isGenerate(useless);
+    }
+}
+
+// Task 2
+vector<pair<string, vector<string>>> ruleGen;
+void RemoveUselessSymbols() {
+    bool uselessSymbols[symbolSize];
+    if (!uselessSymbols[0]){
+        for (int i = 0; i < symbolSize; i++) {
+
+            uselessSymbols[i] = find(terminals.begin(), terminals.end(), symbols[i]) != terminals.end();
+        }
+    }
+
+    uselessSymbols[0] = true;
+    /*
+    bool prev[symbolSize];
+    for(int i = 0; i < symbolSize; i++){
+        prev[i] = uselessSymbols[i];
+    }
+
+    setGenerate(uselessSymbols);
+
+    if(checkEqual(prev, uselessSymbols) == false){
+        RemoveUselessSymbols();
+    }
+     */
+    isGenerate(uselessSymbols);
+    
+    for(auto &i : ruleList){
+        int index = distance(symbols, find(symbols, symbols + symbolSize, i.first));
+        if(uselessSymbols[index]){
+            ruleGen.push_back(make_pair(i.first, i.second));
+        }
+    }
+
+
 
     cout << "2\n";
 }
