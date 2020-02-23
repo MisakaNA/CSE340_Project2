@@ -136,8 +136,8 @@ void ReadGrammar()
     symbols[1] = "$";
     symbolSize += 2;
     for(int i = 0; i < terminals.size(); i++){
-        symbols[i+2] = terminals[i];
-        symbolSize++;
+        symbols[symbolSize++] = terminals[i];
+        //symbolSize++;
     }
     for(auto &i : nonTerminals) {
         symbols[symbolSize++] = i;
@@ -170,6 +170,13 @@ void RemoveUselessSymbols()
         }
     }
     //usefulSymbols[distance(symbols, find(symbols, symbols + symbolSize, ruleList[0].first))] = true;
+
+    for(auto &i : ruleList){
+        if(i.second.empty()||(i.second.size() == 1 && find(terminals.begin(), terminals.end(), i.second[0]) != terminals.end())){
+            usefulSymbols[distance(symbols, find(symbols, symbols + symbolSize, i.first))] = true;
+        }
+    }
+
     cout << "2\n";
 }
 
