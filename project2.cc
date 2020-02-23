@@ -38,7 +38,7 @@ void parse_Rule_list(){
         lexer.UngetToken(t);
         parse_Rule();
 
-        ruleList.push_back(make_pair(getLexeme, rhs));
+        ruleList.emplace_back(getLexeme, rhs);
         rhs.clear();
 
         t = lexer.GetToken();
@@ -210,13 +210,9 @@ void isGenerate(bool *useless){
 vector<pair<string, vector<string>>> ruleGen;
 void RemoveUselessSymbols() {
     bool uselessSymbols[symbolSize];
-    if (!uselessSymbols[0]){
-        for (int i = 0; i < symbolSize; i++) {
-
-            uselessSymbols[i] = find(terminals.begin(), terminals.end(), symbols[i]) != terminals.end();
-        }
+    for (int i = 0; i < symbolSize; i++) {
+        uselessSymbols[i] = find(terminals.begin(), terminals.end(), symbols[i]) != terminals.end();
     }
-
     uselessSymbols[0] = true;
     /*
     bool prev[symbolSize];
@@ -233,10 +229,25 @@ void RemoveUselessSymbols() {
     isGenerate(uselessSymbols);
     
     for(auto &i : ruleList){
-        int index = distance(symbols, find(symbols, symbols + symbolSize, i.first));
-        if(uselessSymbols[index]){
-            ruleGen.push_back(make_pair(i.first, i.second));
+        for(auto &j : i.second){
+            int idx = distance(symbols, find(symbols, symbols + symbolSize, j));
+            if(uselessSymbols[idx]){
+                gen = true;
+            }else{
+                //one ungenerating element means whole rule ungenerating
+                gen = false;
+                break;
+            }
         }
+
+        if(gen){
+            ruleGen.emplace_back(i.first, i.second);
+        }
+
+    }
+
+    if(!ruleGen.empty()){
+
     }
 
 
