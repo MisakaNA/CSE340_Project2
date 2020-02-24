@@ -282,7 +282,9 @@ void getFirst(){
             }else{
                 for(auto &j : firstSet){
                     if(j.first == i.first){
-                        j.second.insert(j.second.begin(), "#");
+                        if(find(j.second.begin(), j.second.end(), "#") == j.second.end()){
+                            j.second.insert(j.second.begin(), "#");
+                        }
                     }
                 }
             }
@@ -296,7 +298,9 @@ void getFirst(){
             }else{
                 for(auto &j : firstSet){
                     if(j.first == i.first){
-                        j.second.push_back(i.second[0]);
+                        if(find(j.second.begin(), j.second.end(), i.second[0]) == j.second.end()){
+                            j.second.push_back(i.second[0]);
+                        }
                     }
                 }
             }
@@ -363,9 +367,9 @@ void CalculateFirstSets()
     getFirst();
     string output;
     for(auto &i : firstSet){
-        output = "FIRST(" + i.first + ") = { ";
+        output += "FIRST(" + i.first + ") = { ";
         for(int j = 0; j < i.second.size(); j++){
-            if(j == i.second.size() - 1){
+            if(j != i.second.size() - 1){
                 output += i.second[j] + ", ";
             }else{
                 output += i.second[j];
