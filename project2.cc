@@ -335,8 +335,20 @@ void getFirst(){
                 set.insert(set.begin(), "#");
             }
 
-            //check if it is fucking already there
-            firstSet.emplace_back(i.first, set);
+            //check if it is already there
+            if(find(holder.begin(), holder.end(), i.first) == holder.end()){
+                firstSet.emplace_back(i.first, set);
+            }else{
+                for(auto &j : firstSet){
+                    if(j.first == i.first){
+                        for(auto &k : set){
+                            if(find(j.second.begin(), j.second.end(), k) == j.second.end()){
+                                j.second.push_back(k);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
