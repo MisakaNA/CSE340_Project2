@@ -21,6 +21,7 @@ vector<string> terminals;
 vector<string> nonTerminals;
 string symbols[100];
 int symbolSize = 0;
+bool predParser = true;
 map<string, int> map;
 LexicalAnalyzer lexer;
 Token t;
@@ -32,7 +33,6 @@ void parse_Id_list();
 
 void parse_Rule_list(){
     t = lexer.GetToken();
-
     if(t.token_type == ID){
         string getLexeme = t.lexeme;
         lexer.UngetToken(t);
@@ -58,9 +58,9 @@ void parse_Rule_list(){
 void parse_Rule(){
     t = lexer.GetToken();
     if(t.token_type == ID){
-        if(find(lhs.begin(), lhs.end(), t.lexeme) == lhs.end()){
-            lhs.push_back(t.lexeme);
-        }
+        //if(find(lhs.begin(), lhs.end(), t.lexeme) == lhs.end()){
+        lhs.push_back(t.lexeme);
+        //}
 
         t = lexer.GetToken();
         if(t.token_type == ARROW){
@@ -136,8 +136,8 @@ void ReadGrammar()
     symbols[0] = "#";
     symbols[1] = "$";
     symbolSize += 2;
-    for(int i = 0; i < terminals.size(); i++){
-        symbols[symbolSize++] = terminals[i];
+    for(const auto & terminal : terminals){
+        symbols[symbolSize++] = terminal;
         //symbolSize++;
     }
     for(auto &i : nonTerminals) {
@@ -242,23 +242,126 @@ void RemoveUselessSymbols() {
 
         if(gen){
             ruleGen.emplace_back(i.first, i.second);
-        }
+        }else{
 
+        }
     }
 
     if(!ruleGen.empty()){
 
     }
 
+    cout << "";
+}
+
+vector<pair<string, vector<string>>> firstSet;
+vector<string> holder;
+bool hasEpsilon = false;
+bool addEpsilon = false;
+void getFirst(){
+    vector<pair<string, vector<string>>> firstPrev;
+    firstPrev.reserve(firstSet.size());
+    for(auto &i : firstSet){
+        firstPrev.emplace_back(i.first, i.second);
+    }
 
 
-    cout << "2\n";
+    for(auto &i : ruleList) {
+        //empty means has only one element and it's epsilon"#"
+        for(auto &j : firstSet){
+            if(find(holder.begin(), holder.end(), j.first) == holder.end()){
+                holder.push_back(j.first);
+            }
+        }
+
+        if(i.second.empty()){
+            if(find(holder.begin(), holder.end(), i.first) == holder.end()){
+                vector<string> set;
+                set.emplace_back("#");
+                firstSet.emplace_back(i.first, set);
+            }else{
+                for(auto &j : firstSet){
+                    if(j.first == i.first){
+                        j.second.insert(j.second.begin(), "#");
+                    }
+                }
+            }
+        }
+        //check if the firstSet one is a terminal, add to firstSet if it is.
+        else if(find(terminals.begin(), terminals.end(), i.second[0]) != terminals.end()){
+            if(find(holder.begin(), holder.end(), i.first) == holder.end()){
+                vector<string> set;
+                set.push_back(i.second[0]);
+                firstSet.emplace_back(i.first, set);
+            }else{
+                for(auto &j : firstSet){
+                    if(j.first == i.first){
+                        j.second.push_back(i.second[0]);
+                    }
+                }
+            }
+        }else{
+            //inside here, this symbol must be a non-terminal
+            vector<string> set;
+            for(auto &j : i.second){
+                if(find(nonTerminals.begin(), nonTerminals.end(), j) != nonTerminals.end()){
+                    if(find(holder.begin(), holder.end(), j) != holder.end()){
+                        for(auto &k : firstSet){
+                            if(k.first == j){
+                                if(!k.second.empty()){
+                                    for(auto &l : k.second){
+                                        if(l != "#"){
+                                            set.push_back(l);
+                                        }else{
+                                            hasEpsilon = true;
+                                            addEpsilon = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }else{
+                    set.push_back(j);
+                    hasEpsilon = false;
+                }
+
+                if(!hasEpsilon){
+                    break;
+                }
+            }
+
+            if(addEpsilon){
+                set.insert(set.begin(), "#");
+            }
+
+            //check if it is fucking already there
+            firstSet.emplace_back(i.first, set);
+        }
+    }
+
+    if(firstPrev != firstSet){
+        getFirst();
+    }
 }
 
 // Task 3
 void CalculateFirstSets()
 {
-    cout << "3\n";
+    getFirst();
+    string output;
+    for(auto &i : firstSet){
+        output = "FIRST(" + i.first + ") = { ";
+        for(int j = 0; j < i.second.size(); j++){
+            if(j == i.second.size() - 1){
+                output += i.second[j] + ", ";
+            }else{
+                output += i.second[j];
+            }
+        }
+        output += " }\n";
+    }
+    cout << output << endl;
 }
 
 // Task 4
@@ -270,7 +373,11 @@ void CalculateFollowSets()
 // Task 5
 void CheckIfGrammarHasPredictiveParser()
 {
-    cout << "5\n";
+    if(predParser){
+        cout << "YES";
+    }else{
+        cout << "NO";
+    }
 }
 
 
@@ -286,7 +393,7 @@ int main (int argc, char* argv[])
 
     /*
        Note that by convention argv[0] is the name of your executable,
-       and the first argument to your program is stored in argv[1]
+       and the firstSet argument to your program is stored in argv[1]
      */
 
     task = atoi(argv[1]);
