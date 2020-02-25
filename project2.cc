@@ -19,10 +19,9 @@ vector<string> rhs;
 vector<string> lhs;
 vector<string> terminals;
 vector<string> nonTerminals;
-string symbols[50];
+string symbols[100];
 int symbolSize = 0;
 bool predParser = true;
-map<string, int> map;
 LexicalAnalyzer lexer;
 Token t;
 
@@ -243,18 +242,6 @@ void RemoveUselessSymbols() {
         generateSymbols[i] = find(terminals.begin(), terminals.end(), symbols[i]) != terminals.end();
     }
     generateSymbols[0] = true;
-    /*
-    bool prev[symbolSize];
-    for(int i = 0; i < symbolSize; i++){
-        prev[i] = generateSymbols[i];
-    }
-
-    setGenerate(generateSymbols);
-
-    if(checkEqual(prev, generateSymbols) == false){
-        RemoveUselessSymbols();
-    }
-     */
     isGenerate(generateSymbols);
     for(auto &i : ruleList){
         for(auto &j : i.second){
@@ -294,112 +281,120 @@ void RemoveUselessSymbols() {
 }
 
 vector<pair<string, vector<string>>> firstSet;
+//map<string, vector<string>> firstSet;
 vector<string> holder;
-string firstHolder;
-vector<string> secondHolder;
+
 bool hasEpsilon = false;
 bool addEpsilon = false;
 void getFirst(){
     vector<pair<string, vector<string>>> firstPrev;
-    //firstPrev.reserve(firstSet.size());
-    firstPrev.reserve(firstSet.size());
-    for(auto &i : firstSet){
-        firstPrev.emplace_back(i.first, i.second);
-    }
+    string firstHolder;
+    vector<string> secondHolder;
+    do {
+        firstPrev.clear();
+        //firstPrev.reserve(firstSet.size());
+        firstPrev.reserve(firstSet.size());
+        for (auto &i : firstSet) {
+            firstPrev.emplace_back(i.first, i.second);
+        }
 
-    for(auto &i : nonTerminals) {
-        //empty means has only one element and it's epsilon"#"
-        addEpsilon = false;
-        for(auto &m : ruleList){
-            if(m.first == i && m.second != secondHolder){
-                firstHolder = m.first;
-                secondHolder = m.second;
+        for (auto &i : nonTerminals) {
+            //empty means has only one element and it's epsilon"#"
+            addEpsilon = false;
+            for (auto &m : ruleList) {
+                if (m.first == i && m.second != secondHolder) {
+                    firstHolder = m.first;
+                    secondHolder = m.second;
 
-                for(auto &j : firstSet){
-                    if(find(holder.begin(), holder.end(), j.first) == holder.end()){
-                        holder.push_back(j.first);
+                    for (auto &j : firstSet) {
+                        if (find(holder.begin(), holder.end(), j.first) == holder.end() &&
+                            holder.size() != firstSet.size()) {
+                            holder.push_back(j.first);
+                        }
                     }
-                }
 
-                if(secondHolder.empty()){
-                    if(find(holder.begin(), holder.end(), firstHolder) == holder.end()){
-                        vector<string> set;
-                        set.emplace_back("#");
-                        firstSet.emplace_back(firstHolder, set);
-                    }else{
-                        for(auto &j : firstSet){
-                            if(j.first == firstHolder){
-                                if(find(j.second.begin(), j.second.end(), "#") == j.second.end()){
-                                    j.second.insert(j.second.begin(), "#");
+                    if (secondHolder.empty()) {
+                        if (find(holder.begin(), holder.end(), firstHolder) == holder.end()) {
+                            vector<string> set;
+                            set.emplace_back("#");
+                            firstSet.emplace_back(firstHolder, set);
+                        } else {
+                            for (auto &j : firstSet) {
+                                if (j.first == firstHolder) {
+                                    if (find(j.second.begin(), j.second.end(), "#") == j.second.end()) {
+                                        j.second.insert(j.second.begin(), "#");
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                    //check if the firstSet one is a terminal, add to firstSet if it is.
-                else if(find(terminals.begin(), terminals.end(), secondHolder[0]) != terminals.end()){
-                    if(find(holder.begin(), holder.end(), firstHolder) == holder.end()){
-                        vector<string> set;
-                        set.push_back(secondHolder[0]);
-                        firstSet.emplace_back(firstHolder, set);
-                    }else{
-                        for(auto &j : firstSet){
-                            if(j.first == firstHolder){
-                                if(find(j.second.begin(), j.second.end(), secondHolder[0]) == j.second.end()){
-                                    j.second.push_back(secondHolder[0]);
+                        //check if the firstSet one is a terminal, add to firstSet if it is.
+                    else if (find(terminals.begin(), terminals.end(), secondHolder[0]) != terminals.end()) {
+                        if (find(holder.begin(), holder.end(), firstHolder) == holder.end()) {
+                            vector<string> set;
+                            set.push_back(secondHolder[0]);
+                            firstSet.emplace_back(firstHolder, set);
+                        } else {
+                            for (auto &j : firstSet) {
+                                if (j.first == firstHolder) {
+                                    if (find(j.second.begin(), j.second.end(), secondHolder[0]) == j.second.end()) {
+                                        j.second.push_back(secondHolder[0]);
+                                    }
                                 }
                             }
                         }
-                    }
-                }else{
-                    //inside here, this symbol must be a non-terminal
-                    vector<string> set;
-                    for(auto &j : secondHolder){
-                        hasEpsilon = false;
-                        if(find(nonTerminals.begin(), nonTerminals.end(), j) != nonTerminals.end()){
-                            if(find(holder.begin(), holder.end(), j) != holder.end()){
-                                for(auto &k : firstSet){
-                                    if(k.first == j){
-                                        if(!k.second.empty()){
-                                            for(auto &l : k.second){
-                                                if(l != "#"){
-                                                    if(find(set.begin(), set.end(), l) == set.end()){
-                                                        set.push_back(l);
-                                                    }
-                                                }else{
-                                                    hasEpsilon = true;
-                                                    addEpsilon = true;
+                    } else {
+                        //inside here, this symbol must be a non-terminal
+                        vector<string> set;
+                        for (auto &j : secondHolder) {
+                            hasEpsilon = false;
+                            if (find(nonTerminals.begin(), nonTerminals.end(), j) != nonTerminals.end()) {
+                                //if (find(holder.begin(), holder.end(), j) != holder.end()) {
+                                for (auto &k : firstSet) {
+                                    if (k.first == j) {
+                                        for (auto &l : k.second) {
+                                            if (l != "#") {
+                                                if (find(set.begin(), set.end(), l) == set.end()) {
+                                                    set.push_back(l);
                                                 }
+                                            } else {
+                                                hasEpsilon = true;
+                                                addEpsilon = true;
                                             }
                                         }
                                     }
                                 }
+                                //}
+                            } else {
+                                if (find(set.begin(), set.end(), j) == set.end()) {
+                                    set.push_back(j);
+                                }
                             }
-                        }else{
-                            set.push_back(j);
-                            hasEpsilon = false;
+
+                            if (!hasEpsilon) {
+                                break;
+                            }
+
                         }
 
-                        if(!hasEpsilon){
-                            break;
+                        if (addEpsilon && hasEpsilon) {
+                            if (find(set.begin(), set.end(), "#") == set.end()) {
+                                set.insert(set.begin(), "#");
+                            }
                         }
 
-                    }
-
-                    if(addEpsilon && hasEpsilon){
-                        set.insert(set.begin(), "#");
-                    }
-
-                    //check if it is already there
-                    if(find(holder.begin(), holder.end(), firstHolder) == holder.end()){
-                        firstSet.emplace_back(firstHolder, set);
-                    }else{
-                        for(auto &j : firstSet){
-                            if(j.first == firstHolder){
-                                for(auto &k : set){
-                                    if(find(j.second.begin(), j.second.end(), k) == j.second.end()){
-                                        j.second.push_back(k);
+                        //check if it is already there
+                        if (find(holder.begin(), holder.end(), firstHolder) == holder.end()) {
+                            firstSet.emplace_back(firstHolder, set);
+                        } else {
+                            for (auto &j : firstSet) {
+                                if (j.first == firstHolder) {
+                                    for (auto &k : set) {
+                                        if (find(j.second.begin(), j.second.end(), k) == j.second.end()) {
+                                            j.second.push_back(k);
+                                        }
                                     }
+                                    break;
                                 }
                             }
                         }
@@ -407,13 +402,83 @@ void getFirst(){
                 }
             }
         }
-    }
 
-    if(firstPrev != firstSet){
+    }while(firstPrev != firstSet);
+    //getFirst();
 
-        getFirst();
+}
+
+map<string, vector<string>> followSet;
+bool epsilon = false;
+void getFollow(){
+    map<string, vector<string>> followPrev;
+    string firstHolder;
+    vector<string> secondHolder;
+    getFirst();
+    followSet[nonTerminals[0]].push_back("$");
+    do{
+
+        for(auto &i : followSet){
+            followPrev[i.first] = i.second;
+        }
+    //for(auto &i : nonTerminals){
+        for (auto &m : ruleList) {
+            int temp = 0;
+            firstHolder = m.first;
+            secondHolder = m.second;
+
+            for(int i = 0; i < secondHolder.size(); i++){
+                if(find(nonTerminals.begin(), nonTerminals.end(), secondHolder[i]) != nonTerminals.end()){
+                    vector<string> followVec = vector<string> (m.second.begin() + i + 1, m.second.end());
+
+                    if(!followVec.empty()){
+                        for(int j = 0; j < followVec.size(); j++){
+                            epsilon = false;
+                            if(find(terminals.begin(), terminals.end(), followVec[j]) != terminals.end()){
+                                if(find(followSet[secondHolder[i]].begin(), followSet[secondHolder[i]].end(), followVec[j]) == followSet[secondHolder[i]].end()){
+                                    followSet[secondHolder[i]].push_back(followVec[j]);
+                                }
+                            }else{
+                                for(auto &k : firstSet){
+                                    if(k.first == followVec[j]){
+                                        for(auto &l : k.second){
+                                            if(l != "#"){
+                                                followSet[secondHolder[i]].push_back(l);
+                                            }else{
+                                                epsilon = true;
+                                            }
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                            if(!epsilon){
+                                break;
+                            }
+                        }
+                    }else{
+                        for(auto &j : followSet[firstHolder]){
+                            if(find(followSet[secondHolder[i]].begin(), followSet[secondHolder[i]].end(), j) == followSet[secondHolder[i]].end()){
+                                followSet[secondHolder[i]].push_back(j);
+                            }
+                        }
+                    }
+                }
+                temp++;
+
+            }
+
+        }
+    //}
+    }while(followPrev != followSet);
+
+    for (auto &i : followSet){
+        if (i.second.empty()){
+            i.second.push_back("$");
+        }
     }
 }
+
 
 // Task 3
 void CalculateFirstSets()
@@ -443,10 +508,32 @@ void CalculateFirstSets()
     cout << output << endl;
 }
 
+
+
 // Task 4
 void CalculateFollowSets()
 {
-    cout << "4\n";
+    getFollow();
+    string output;
+    vector<string> tempTerminal = terminals;
+    tempTerminal.insert(tempTerminal.begin(), "$");
+    for(auto &i : nonTerminals){
+        int commaTracker = 0;
+        output += "FOLLOW(" + i + ") = { ";
+        for(auto &j : tempTerminal){
+            if(find(followSet[i].begin(), followSet[i].end(), j) != followSet[i].end()){
+                commaTracker++;
+                if(commaTracker != followSet[i].size()){
+                    output += j + ", ";
+                }else{
+                    output += j;
+                }
+            }
+
+        }
+        output += " }\n";
+    }
+    cout << output << endl;
 }
 
 // Task 5
