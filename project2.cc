@@ -19,7 +19,7 @@ vector<string> rhs;
 vector<string> lhs;
 vector<string> terminals;
 vector<string> nonTerminals;
-string symbols[100];
+string symbols[50];
 int symbolSize = 0;
 bool predParser = true;
 map<string, int> map;
@@ -301,6 +301,7 @@ bool hasEpsilon = false;
 bool addEpsilon = false;
 void getFirst(){
     vector<pair<string, vector<string>>> firstPrev;
+    //firstPrev.reserve(firstSet.size());
     firstPrev.reserve(firstSet.size());
     for(auto &i : firstSet){
         firstPrev.emplace_back(i.first, i.second);
@@ -308,7 +309,7 @@ void getFirst(){
 
     for(auto &i : nonTerminals) {
         //empty means has only one element and it's epsilon"#"
-
+        addEpsilon = false;
         for(auto &m : ruleList){
             if(m.first == i && m.second != secondHolder){
                 firstHolder = m.first;
@@ -354,6 +355,7 @@ void getFirst(){
                     //inside here, this symbol must be a non-terminal
                     vector<string> set;
                     for(auto &j : secondHolder){
+                        hasEpsilon = false;
                         if(find(nonTerminals.begin(), nonTerminals.end(), j) != nonTerminals.end()){
                             if(find(holder.begin(), holder.end(), j) != holder.end()){
                                 for(auto &k : firstSet){
@@ -361,7 +363,9 @@ void getFirst(){
                                         if(!k.second.empty()){
                                             for(auto &l : k.second){
                                                 if(l != "#"){
-                                                    set.push_back(l);
+                                                    if(find(set.begin(), set.end(), l) == set.end()){
+                                                        set.push_back(l);
+                                                    }
                                                 }else{
                                                     hasEpsilon = true;
                                                     addEpsilon = true;
@@ -379,9 +383,10 @@ void getFirst(){
                         if(!hasEpsilon){
                             break;
                         }
+
                     }
 
-                    if(addEpsilon){
+                    if(addEpsilon && hasEpsilon){
                         set.insert(set.begin(), "#");
                     }
 
@@ -405,6 +410,7 @@ void getFirst(){
     }
 
     if(firstPrev != firstSet){
+
         getFirst();
     }
 }
