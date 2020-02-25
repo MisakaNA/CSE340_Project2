@@ -211,32 +211,55 @@ void isGenerate(bool *useless){
     }
 }
 
+bool rea = true;
+void isReachable(bool *reachable){
+    bool prev[symbolSize];
+    for(int i = 0; i < symbolSize; i++){
+        prev[i] = reachable[i];
+    }
+
+    for(auto &i : ruleList){
+        int index = distance(symbols, find(symbols, symbols + symbolSize, i.first));
+        if(reachable[index]){
+            for(auto &j : i.second){
+                if(find(nonTerminals.begin(), nonTerminals.end(), j) != nonTerminals.end()){
+                    int tempIdx = distance(symbols, find(symbols, symbols + symbolSize, j));
+                    reachable[tempIdx] = true;
+                }
+            }
+        }
+    }
+
+    if(!checkEqual(prev, reachable)){
+        isReachable(reachable);
+    }
+}
+
 // Task 2
 vector<pair<string, vector<string>>> ruleGen;
 void RemoveUselessSymbols() {
-    bool uselessSymbols[symbolSize];
+    bool generateSymbols[symbolSize];
     for (int i = 0; i < symbolSize; i++) {
-        uselessSymbols[i] = find(terminals.begin(), terminals.end(), symbols[i]) != terminals.end();
+        generateSymbols[i] = find(terminals.begin(), terminals.end(), symbols[i]) != terminals.end();
     }
-    uselessSymbols[0] = true;
+    generateSymbols[0] = true;
     /*
     bool prev[symbolSize];
     for(int i = 0; i < symbolSize; i++){
-        prev[i] = uselessSymbols[i];
+        prev[i] = generateSymbols[i];
     }
 
-    setGenerate(uselessSymbols);
+    setGenerate(generateSymbols);
 
-    if(checkEqual(prev, uselessSymbols) == false){
+    if(checkEqual(prev, generateSymbols) == false){
         RemoveUselessSymbols();
     }
      */
-    isGenerate(uselessSymbols);
-
+    isGenerate(generateSymbols);
     for(auto &i : ruleList){
         for(auto &j : i.second){
             int idx = distance(symbols, find(symbols, symbols + symbolSize, j));
-            if(uselessSymbols[idx]){
+            if(generateSymbols[idx]){
                 gen = true;
             }else{
                 //one ungenerating element means whole rule ungenerating
@@ -253,6 +276,17 @@ void RemoveUselessSymbols() {
     }
 
     if(!ruleGen.empty()){
+        bool reachableSymbols[symbolSize];
+        int index = distance(symbols, find(symbols, symbols + symbolSize, ruleList[0].first));
+        for(int i = 0; i < symbolSize; i++){
+            if(i == index){
+                reachableSymbols[i] = true;
+            }else{
+                reachableSymbols[i] = false;
+            }
+        }
+
+        isReachable(reachableSymbols);
 
     }
 
@@ -271,7 +305,6 @@ void getFirst(){
     for(auto &i : firstSet){
         firstPrev.emplace_back(i.first, i.second);
     }
-
 
     for(auto &i : nonTerminals) {
         //empty means has only one element and it's epsilon"#"
