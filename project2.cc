@@ -31,6 +31,12 @@ void parse_Rule();
 void parse_Right_hand_side();
 void parse_Id_list();
 
+void syntax_error()
+{
+    cout << "SYNTAX ERROR !!!\n";
+    exit(1);
+}
+
 void parse_Rule_list(){
     t = lexer.GetToken();
     if(t.token_type == ID){
@@ -48,10 +54,10 @@ void parse_Rule_list(){
         }else if(t.token_type == DOUBLEHASH){
             return;
         }else{
-            //syntax_error();
+            syntax_error();
         }
     }else{
-        //syntax_error();
+        syntax_error();
     }
 }
 
@@ -67,13 +73,13 @@ void parse_Rule(){
             parse_Right_hand_side();
             t = lexer.GetToken();
             if(t.token_type != HASH){
-                //syntax_error();
+                syntax_error();
             }
         }else{
-            //syntax_error();
+            syntax_error();
         }
     }else{
-        //syntax_error();
+        syntax_error();
     }
 }
 
@@ -90,7 +96,7 @@ void parse_Right_hand_side() {
     }else if(t.token_type == HASH){
         lexer.UngetToken(t);
     }else{
-        //syntax_error();
+        syntax_error();
     }
 }
 
@@ -105,7 +111,7 @@ void parse_Id_list() {
             parse_Id_list();
         }
     }else {
-        //syntax_error();
+        syntax_error();
     }
 }
 
@@ -138,7 +144,6 @@ void ReadGrammar()
     symbolSize += 2;
     for(const auto & terminal : terminals){
         symbols[symbolSize++] = terminal;
-        //symbolSize++;
     }
     for(auto &i : nonTerminals) {
         symbols[symbolSize++] = i;
@@ -227,7 +232,7 @@ void RemoveUselessSymbols() {
     }
      */
     isGenerate(uselessSymbols);
-    
+
     for(auto &i : ruleList){
         for(auto &j : i.second){
             int idx = distance(symbols, find(symbols, symbols + symbolSize, j));
@@ -256,6 +261,8 @@ void RemoveUselessSymbols() {
 
 vector<pair<string, vector<string>>> firstSet;
 vector<string> holder;
+string firstHolder;
+vector<string> secondHolder;
 bool hasEpsilon = false;
 bool addEpsilon = false;
 void getFirst(){
@@ -266,88 +273,96 @@ void getFirst(){
     }
 
 
-    for(auto &i : ruleList) {
+    for(auto &i : nonTerminals) {
         //empty means has only one element and it's epsilon"#"
-        for(auto &j : firstSet){
-            if(find(holder.begin(), holder.end(), j.first) == holder.end()){
-                holder.push_back(j.first);
-            }
-        }
 
-        if(i.second.empty()){
-            if(find(holder.begin(), holder.end(), i.first) == holder.end()){
-                vector<string> set;
-                set.emplace_back("#");
-                firstSet.emplace_back(i.first, set);
-            }else{
+        for(auto &m : ruleList){
+            if(m.first == i && m.second != secondHolder){
+                firstHolder = m.first;
+                secondHolder = m.second;
+
                 for(auto &j : firstSet){
-                    if(j.first == i.first){
-                        if(find(j.second.begin(), j.second.end(), "#") == j.second.end()){
-                            j.second.insert(j.second.begin(), "#");
+                    if(find(holder.begin(), holder.end(), j.first) == holder.end()){
+                        holder.push_back(j.first);
+                    }
+                }
+
+                if(secondHolder.empty()){
+                    if(find(holder.begin(), holder.end(), firstHolder) == holder.end()){
+                        vector<string> set;
+                        set.emplace_back("#");
+                        firstSet.emplace_back(firstHolder, set);
+                    }else{
+                        for(auto &j : firstSet){
+                            if(j.first == firstHolder){
+                                if(find(j.second.begin(), j.second.end(), "#") == j.second.end()){
+                                    j.second.insert(j.second.begin(), "#");
+                                }
+                            }
                         }
                     }
                 }
-            }
-        }
-        //check if the firstSet one is a terminal, add to firstSet if it is.
-        else if(find(terminals.begin(), terminals.end(), i.second[0]) != terminals.end()){
-            if(find(holder.begin(), holder.end(), i.first) == holder.end()){
-                vector<string> set;
-                set.push_back(i.second[0]);
-                firstSet.emplace_back(i.first, set);
-            }else{
-                for(auto &j : firstSet){
-                    if(j.first == i.first){
-                        if(find(j.second.begin(), j.second.end(), i.second[0]) == j.second.end()){
-                            j.second.push_back(i.second[0]);
-                        }
-                    }
-                }
-            }
-        }else{
-            //inside here, this symbol must be a non-terminal
-            vector<string> set;
-            for(auto &j : i.second){
-                if(find(nonTerminals.begin(), nonTerminals.end(), j) != nonTerminals.end()){
-                    if(find(holder.begin(), holder.end(), j) != holder.end()){
-                        for(auto &k : firstSet){
-                            if(k.first == j){
-                                if(!k.second.empty()){
-                                    for(auto &l : k.second){
-                                        if(l != "#"){
-                                            set.push_back(l);
-                                        }else{
-                                            hasEpsilon = true;
-                                            addEpsilon = true;
-                                        }
-                                    }
+                    //check if the firstSet one is a terminal, add to firstSet if it is.
+                else if(find(terminals.begin(), terminals.end(), secondHolder[0]) != terminals.end()){
+                    if(find(holder.begin(), holder.end(), firstHolder) == holder.end()){
+                        vector<string> set;
+                        set.push_back(secondHolder[0]);
+                        firstSet.emplace_back(firstHolder, set);
+                    }else{
+                        for(auto &j : firstSet){
+                            if(j.first == firstHolder){
+                                if(find(j.second.begin(), j.second.end(), secondHolder[0]) == j.second.end()){
+                                    j.second.push_back(secondHolder[0]);
                                 }
                             }
                         }
                     }
                 }else{
-                    set.push_back(j);
-                    hasEpsilon = false;
-                }
+                    //inside here, this symbol must be a non-terminal
+                    vector<string> set;
+                    for(auto &j : secondHolder){
+                        if(find(nonTerminals.begin(), nonTerminals.end(), j) != nonTerminals.end()){
+                            if(find(holder.begin(), holder.end(), j) != holder.end()){
+                                for(auto &k : firstSet){
+                                    if(k.first == j){
+                                        if(!k.second.empty()){
+                                            for(auto &l : k.second){
+                                                if(l != "#"){
+                                                    set.push_back(l);
+                                                }else{
+                                                    hasEpsilon = true;
+                                                    addEpsilon = true;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }else{
+                            set.push_back(j);
+                            hasEpsilon = false;
+                        }
 
-                if(!hasEpsilon){
-                    break;
-                }
-            }
+                        if(!hasEpsilon){
+                            break;
+                        }
+                    }
 
-            if(addEpsilon){
-                set.insert(set.begin(), "#");
-            }
+                    if(addEpsilon){
+                        set.insert(set.begin(), "#");
+                    }
 
-            //check if it is already there
-            if(find(holder.begin(), holder.end(), i.first) == holder.end()){
-                firstSet.emplace_back(i.first, set);
-            }else{
-                for(auto &j : firstSet){
-                    if(j.first == i.first){
-                        for(auto &k : set){
-                            if(find(j.second.begin(), j.second.end(), k) == j.second.end()){
-                                j.second.push_back(k);
+                    //check if it is already there
+                    if(find(holder.begin(), holder.end(), firstHolder) == holder.end()){
+                        firstSet.emplace_back(firstHolder, set);
+                    }else{
+                        for(auto &j : firstSet){
+                            if(j.first == firstHolder){
+                                for(auto &k : set){
+                                    if(find(j.second.begin(), j.second.end(), k) == j.second.end()){
+                                        j.second.push_back(k);
+                                    }
+                                }
                             }
                         }
                     }
@@ -366,13 +381,22 @@ void CalculateFirstSets()
 {
     getFirst();
     string output;
+
+    vector<string> tempTerminals = terminals;
+    tempTerminals.insert(tempTerminals.begin(), "#");
+
     for(auto &i : firstSet){
+        int trackComma = 0;
         output += "FIRST(" + i.first + ") = { ";
-        for(int j = 0; j < i.second.size(); j++){
-            if(j != i.second.size() - 1){
-                output += i.second[j] + ", ";
-            }else{
-                output += i.second[j];
+        for(auto &j : tempTerminals) {
+            if(find(i.second.begin(), i.second.end(), j) != i.second.end()) {
+                trackComma++;
+                if(trackComma != i.second.size()){
+                    output += j + ", ";
+                }else{
+                    output += j;
+                }
+
             }
         }
         output += " }\n";
@@ -397,7 +421,7 @@ void CheckIfGrammarHasPredictiveParser()
 }
 
 
-    
+
 int main (int argc, char* argv[])
 {
     int task;
@@ -414,7 +438,7 @@ int main (int argc, char* argv[])
 
     task = atoi(argv[1]);
 
-    
+
     ReadGrammar();  // Reads the input grammar from standard input
                     // and represent it internally in data structures
                     // ad described in project 2 presentation file
