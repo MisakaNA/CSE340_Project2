@@ -408,6 +408,7 @@ void getFollow(){
     bool isChanged;
     string ruleName;
     vector<string> ruleBody;
+    //rule 1
     followSet[nonTerminals[0]].push_back("$");
     do{
         isChanged = false;
@@ -432,6 +433,7 @@ void getFollow(){
                         //regular possibilities
                         for(auto &j : followVec){
                             epsilon = false;
+                            // A -> B a;
                             if(find(terminals.begin(), terminals.end(), j) != terminals.end()){
                                 if(find(followSet[ruleBody[i]].begin(), followSet[ruleBody[i]].end(), j) == followSet[ruleBody[i]].end()){
                                     followSet[ruleBody[i]].push_back(j);
@@ -439,6 +441,7 @@ void getFollow(){
                                 }
                                 break;
                             }else{
+                                //rule 4 and 5  A -> B C D
                                 for(auto &l : firstSet[j]){
                                     if(l != "#"){
                                         if(find(followSet[ruleBody[i]].begin(), followSet[ruleBody[i]].end(), l) == followSet[ruleBody[i]].end()){
@@ -466,6 +469,7 @@ void getFollow(){
                                 }
                             }
                         }else{
+                            //A -> xxxxx B a b c d e    epsilon belongs to abcde
                             string temp;
                             for(auto &j : ruleBody){
                                 if(find(nonTerminals.begin(), nonTerminals.end(), j) != nonTerminals.end()){
