@@ -39,11 +39,11 @@ void syntax_error()
 void parse_Rule_list(){
     t = lexer.GetToken();
     if(t.token_type == ID){
-        string getLexeme = t.lexeme;
+        string getRuleName = t.lexeme;
         lexer.UngetToken(t);
         parse_Rule();
 
-        ruleList.emplace_back(getLexeme, rhs);
+        ruleList.emplace_back(getRuleName, rhs);
         rhs.clear();
 
         t = lexer.GetToken();
@@ -126,8 +126,8 @@ void ReadGrammar()
         }
 
         for(auto &j : i.second){
-            if(find(lhs.begin(), lhs.end(), j) == lhs.end()){
-                if(find(terminals.begin(), terminals.end(), j) == terminals.end()){
+            if(find(lhs.begin(), lhs.end(), j) == lhs.end()) {
+                if (find(terminals.begin(), terminals.end(), j) == terminals.end()) {
                     terminals.push_back(j);
                 }
             }else{
@@ -150,94 +150,79 @@ void ReadGrammar()
 }
 
 // Task 1
-void printTerminalsAndNoneTerminals()
-{
+void printTerminalsAndNoneTerminals() {
     string output;
-    for(auto &i : terminals){
+    for (auto &i : terminals) {
         output += i + " ";
     }
     output += " ";
-    for(auto &i : nonTerminals) {
+    for (auto &i : nonTerminals) {
         output += i + " ";
     }
 
-    cout << output <<endl;
-}
-
-
-bool checkEqual(const bool arr1[], const bool arr2[]){
-    for(int i = 0; i < symbolSize; i++){
-        if(arr1[i] != arr2[i]){
-            return false;
-        }
-    }
-    return true;
+    cout << output << endl;
 }
 
 bool gen = false;
 void isGenerate(bool *useless){
-    //save current one
-    bool prev[symbolSize];
-    for(int i = 0; i < symbolSize; i++){
-        prev[i] = useless[i];
-    }
-
-    //setGenerate(useless);
-
-    for(auto &i : ruleList){
-        //go through rule body vector
-        for(auto &j : i.second){
-            //check is there any element not true in usefulSymbol
-            int index = distance(symbols, find(symbols, symbols + symbolSize, j));
-            if(useless[index]){
-                gen = true;
-            }else{
-                //one ungenerating element means whole rule ungenerating
-                gen = false;
-                break;
+    bool isChanged = false;
+    do {
+        isChanged = false;
+        for (auto &i : ruleList) {
+            //go through rule body vector
+            for (auto &j : i.second) {
+                //check is there any element not true in usefulSymbol
+                int index = distance(symbols, find(symbols, symbols + symbolSize, j));
+                if (useless[index]) {
+                    gen = true;
+                } else {
+                    //one ungenerating element means whole rule ungenerating
+                    gen = false;
+                    break;
+                }
             }
-        }
 
-        //check if all generating or empty (empty means there is only one epsilon) and sign to true in usefulSymbol
-        if(i.second.empty()|| gen){
-            int index = distance(symbols, find(symbols, symbols + symbolSize, i.first));
-            useless[index] = true;
-        }
-    }
-
-    if(!checkEqual(prev, useless)){
-        isGenerate(useless);
-    }
-}
-
-bool rea = true;
-void isReachable(bool *reachable){
-    bool prev[symbolSize];
-    for(int i = 0; i < symbolSize; i++){
-        prev[i] = reachable[i];
-    }
-
-    for(auto &i : ruleList){
-        int index = distance(symbols, find(symbols, symbols + symbolSize, i.first));
-        if(reachable[index]){
-            for(auto &j : i.second){
-                if(find(nonTerminals.begin(), nonTerminals.end(), j) != nonTerminals.end()){
-                    int tempIdx = distance(symbols, find(symbols, symbols + symbolSize, j));
-                    reachable[tempIdx] = true;
+            //check if all generating or empty (empty means there is only one epsilon) and sign to true in usefulSymbol
+            if (i.second.empty() || gen) {
+                int index = distance(symbols, find(symbols, symbols + symbolSize, i.first));
+                if(!useless[index]){
+                    useless[index] = true;
+                    isChanged = true;
                 }
             }
         }
-    }
+    }while(isChanged);
 
-    if(!checkEqual(prev, reachable)){
-        isReachable(reachable);
-    }
 }
 
-// Task 2
+bool rea = true;
+void isReachable(bool *reachable, vector<pair<string, vector<string>>> ruleGen) {
+    bool isChanged = false;
+    do{
+        isChanged = false;
+        for (auto &i : ruleGen) {
+            int index = distance(symbols, find(symbols, symbols + symbolSize, i.first));
+            if (reachable[index]) {
+                for (auto &j : i.second) {
+                    //if (find(nonTerminals.begin(), nonTerminals.end(), j) != nonTerminals.end()) {
+                        int tempIdx = distance(symbols, find(symbols, symbols + symbolSize, j));
+                        if(!reachable[tempIdx]){
+                            reachable[tempIdx] = true;
+                            isChanged = true;
+                        }
+                    //}
+                }
+            }
+        }
+
+    }while(isChanged);
+}
+
 vector<pair<string, vector<string>>> ruleGen;
-void RemoveUselessSymbols() {
+vector<pair<string, vector<string>>> useful;
+void getUseless(){
     bool generateSymbols[symbolSize];
+    bool reachableSymbols[symbolSize];
     for (int i = 0; i < symbolSize; i++) {
         generateSymbols[i] = find(terminals.begin(), terminals.end(), symbols[i]) != terminals.end();
     }
@@ -258,41 +243,73 @@ void RemoveUselessSymbols() {
         if(gen){
             ruleGen.emplace_back(i.first, i.second);
         }else{
-
+            predParser = false;
         }
     }
 
     if(!ruleGen.empty()){
-        bool reachableSymbols[symbolSize];
         int index = distance(symbols, find(symbols, symbols + symbolSize, ruleList[0].first));
         for(int i = 0; i < symbolSize; i++){
-            if(i == index){
-                reachableSymbols[i] = true;
+            reachableSymbols[i] = i == index;
+        }
+        isReachable(reachableSymbols, ruleGen);
+        for(auto &i : ruleGen){
+            for(auto &j : i.second){
+                int idx = distance(symbols, find(symbols, symbols + symbolSize, j));
+                if(reachableSymbols[idx]){
+                    rea = true;
+                }else{
+                    //one ungenerating element means whole rule ungenerating
+                    rea = false;
+                    break;
+                }
+            }
+
+            if(rea){
+                useful.emplace_back(i.first, i.second);
             }else{
-                reachableSymbols[i] = false;
+                predParser = false;
             }
         }
-
-        isReachable(reachableSymbols);
-
     }
-
-    cout << "";
 }
 
-vector<pair<string, vector<string>>> firstSet;
-//map<string, vector<string>> firstSet;
+// Task 2
+void RemoveUselessSymbols() {
+    getUseless();
+    if(!useful.empty()){
+        string output;
+        for(auto &i : useful){
+            output += i.first + " -> ";
+            if(!i.second.empty()){
+                for(auto &j : i.second){
+                    output += j + " ";
+                }
+            }else{
+                output += "#";
+            }
+            output += "\n";
+        }
+        cout << output;
+
+    }else{
+        cout << "";
+    }
+}
+
+//vector<pair<string, vector<string>>> firstSet;
+map<string, vector<string>> firstSet;
 vector<string> holder;
 
 bool hasEpsilon = false;
 bool addEpsilon = false;
 void getFirst(){
+    /*
     vector<pair<string, vector<string>>> firstPrev;
     string firstHolder;
     vector<string> secondHolder;
     do {
         firstPrev.clear();
-        //firstPrev.reserve(firstSet.size());
         firstPrev.reserve(firstSet.size());
         for (auto &i : firstSet) {
             firstPrev.emplace_back(i.first, i.second);
@@ -405,6 +422,42 @@ void getFirst(){
 
     }while(firstPrev != firstSet);
     //getFirst();
+*/
+    map<string, vector<string>> firstPrev;
+    string ruleName;
+    vector<string> ruleBody;
+    bool isChanged = false;
+    do{
+        isChanged = false;
+        for(auto &i : ruleList){
+            ruleName = i.first;
+            ruleBody = i.second;
+
+            //empty means #
+            if(ruleBody.empty()){
+                if(find(firstSet[ruleName].begin(), firstSet[ruleName].end(), "#") == firstSet[ruleName].end()){
+                    firstSet[ruleName].push_back("#");
+                    isChanged = true;
+                }
+            }else if(find(terminals.begin(), terminals.end(), ruleBody[0]) != terminals.end()){
+                if(find(firstSet[ruleName].begin(), firstSet[ruleName].end(), ruleBody[0]) == firstSet[ruleName].end()){
+                    firstSet[ruleName].push_back(ruleBody[0]);
+                    isChanged = true;
+                }
+            }else{
+                for(auto &j : ruleBody){
+                    if(find(nonTerminals.begin(), nonTerminals.end(), j) != nonTerminals.end()){
+                        vector<string> tempFirst;
+                        for(auto &k : firstSet[j]){
+                            if(find(firstSet[j].begin(), firstSet[j].end(), k) == firstSet[j].end()){
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }while(isChanged);
 
 }
 
@@ -539,6 +592,7 @@ void CalculateFollowSets()
 // Task 5
 void CheckIfGrammarHasPredictiveParser()
 {
+    getUseless();
     if(predParser){
         cout << "YES";
     }else{
