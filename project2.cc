@@ -20,6 +20,7 @@ vector<string> lhs;
 vector<string> terminals;
 vector<string> nonTerminals;
 string symbols[100];
+bool generateSymbols[100];
 int symbolSize = 0;
 bool hasUseless = true;
 LexicalAnalyzer lexer;
@@ -141,11 +142,13 @@ void ReadGrammar()
     symbols[0] = "#";
     symbols[1] = "$";
     symbolSize += 2;
-    for(const auto & terminal : terminals){
-        symbols[symbolSize++] = terminal;
+    for(auto &i : terminals){
+        symbols[symbolSize] = i;
+        generateSymbols[symbolSize++] = true;
     }
     for(auto &i : nonTerminals) {
-        symbols[symbolSize++] = i;
+        symbols[symbolSize] = i;
+        generateSymbols[symbolSize++] = false;
     }
 }
 
@@ -165,7 +168,7 @@ void printTerminalsAndNoneTerminals() {
 
 bool gen = false;
 void isGenerate(bool *useless){
-    bool isChanged = false;
+    bool isChanged;
     do {
         isChanged = false;
         for (auto &i : ruleList) {
@@ -192,39 +195,36 @@ void isGenerate(bool *useless){
             }
         }
     }while(isChanged);
-
 }
 
 bool rea = true;
 void isReachable(bool *reachable, vector<pair<string, vector<string>>> ruleGen) {
-    bool isChanged = false;
+    bool isChanged;
     do{
         isChanged = false;
         for (auto &i : ruleGen) {
             int index = distance(symbols, find(symbols, symbols + symbolSize, i.first));
             if (reachable[index]) {
                 for (auto &j : i.second) {
-                    //if (find(nonTerminals.begin(), nonTerminals.end(), j) != nonTerminals.end()) {
-                        int tempIdx = distance(symbols, find(symbols, symbols + symbolSize, j));
-                        if(!reachable[tempIdx]){
-                            reachable[tempIdx] = true;
-                            isChanged = true;
-                        }
+                    int tempIdx = distance(symbols, find(symbols, symbols + symbolSize, j));
+                    if(!reachable[tempIdx]){
+                        reachable[tempIdx] = true;
+                        isChanged = true;
+                    }
                 }
             }
         }
-
     }while(isChanged);
 }
 
 vector<pair<string, vector<string>>> ruleGen;
 vector<pair<string, vector<string>>> useful;
 void getUseless(){
-    bool generateSymbols[symbolSize];
+    //bool generateSymbols[symbolSize];
     bool reachableSymbols[symbolSize];
-    for (int i = 0; i < symbolSize; i++) {
+    /*for (int i = 0; i < symbolSize; i++) {
         generateSymbols[i] = find(terminals.begin(), terminals.end(), symbols[i]) != terminals.end();
-    }
+    }*/
     generateSymbols[0] = true;
 
     //get generate array
@@ -333,7 +333,6 @@ void getFirst(){
                 for(auto &j : ruleBody){
                     hasEpsilon = false;
                     if(find(nonTerminals.begin(), nonTerminals.end(), j) != nonTerminals.end()){
-                        vector<string> tempFirst;
                         for(auto &k : firstSet[j]){
                             if(k != "#"){
                                 if(find(firstSet[ruleName].begin(), firstSet[ruleName].end(), k) == firstSet[ruleName].end()) {
@@ -509,7 +508,7 @@ void CalculateFollowSets()
     cout << output << endl;
 }
 
-vector<string> ruleFirstSet(vector<string> ruleBody) {
+vector<string> rhsFirst(vector<string> ruleBody) {
     vector<string> result;
     bool hasEpsilon = true;
     if (ruleBody.empty()) {
@@ -565,18 +564,15 @@ void CheckIfGrammarHasPredictiveParser()
         }
         firstSet["#"].push_back("#");
 
-
         for(int i = 0; i < ruleList.size(); i++){
             //get followed rules
-            pair<string, vector<string>> temp1 = ruleList[i];
             for(int j = i + 1; j < ruleList.size(); j++){
                 //find similar declared rules
-                pair<string, vector<string>> temp2 = ruleList[j];
                 if(ruleList[i].first == ruleList[j].first){
-                    vector<string> result_i = ruleFirstSet(ruleList[i].second);
-                    vector<string> result_j = ruleFirstSet(ruleList[j].second);
+                    vector<string> first_i = rhsFirst(ruleList[i].second);
+                    vector<string> first_j = rhsFirst(ruleList[j].second);
                     //check intersection
-                    notSatCond1 = checkIntersection(result_i, result_j);
+                    notSatCond1 = checkIntersection(first_i, first_j);
                     if(notSatCond1){
                         breakLoop = true;
                         break;
@@ -607,7 +603,6 @@ void CheckIfGrammarHasPredictiveParser()
                 output = "YES";
             }
         }
-
     }
     cout << output;
 }
