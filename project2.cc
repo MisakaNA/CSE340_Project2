@@ -21,7 +21,7 @@ vector<string> terminals;
 vector<string> nonTerminals;
 string symbols[100];
 int symbolSize = 0;
-bool predParser = true;
+bool hasUseless = true;
 LexicalAnalyzer lexer;
 Token t;
 
@@ -245,7 +245,7 @@ void getUseless(){
             ruleGen.emplace_back(i.first, i.second);
         }else{
             //if the rule is not generating it will make the rule list unpridictive
-            predParser = false;
+            hasUseless = false;
         }
     }
 
@@ -274,7 +274,7 @@ void getUseless(){
                 useful.emplace_back(i.first, i.second);
             }else{
                 //if the rule is unreachable it will make the rule list unpridictive
-                predParser = false;
+                hasUseless = false;
             }
         }
     }
@@ -550,14 +550,15 @@ bool checkIntersection(vector<string> vec1, vector<string> vec2){
 void CheckIfGrammarHasPredictiveParser()
 {
     string output;
-    //update global predParser value by calling getUseless
+    //update global hasUseless value by calling getUseless
     getUseless();
-    if(!predParser){
+    if(!hasUseless){
         output = "NO";
     }else{
         //check condition 1 first
         getFirst();
-        bool satisfiedCond1 = true;
+        bool notSatCond1 = true;
+        bool breakLoop = false;
         //add first set of terminals and epsilon to firstSet for convenient
         for(auto &i : terminals){
             firstSet[i].push_back(i);
@@ -567,27 +568,44 @@ void CheckIfGrammarHasPredictiveParser()
 
         for(int i = 0; i < ruleList.size(); i++){
             //get followed rules
+            pair<string, vector<string>> temp1 = ruleList[i];
             for(int j = i + 1; j < ruleList.size(); j++){
                 //find similar declared rules
+                pair<string, vector<string>> temp2 = ruleList[j];
                 if(ruleList[i].first == ruleList[j].first){
                     vector<string> result_i = ruleFirstSet(ruleList[i].second);
                     vector<string> result_j = ruleFirstSet(ruleList[j].second);
                     //check intersection
-                    satisfiedCond1 = checkIntersection(result_i, result_j);
-                }
-                if(satisfiedCond1){
-                    break;
+                    notSatCond1 = checkIntersection(result_i, result_j);
+                    if(notSatCond1){
+                        breakLoop = true;
+                        break;
+                    }
                 }
             }
-            if(satisfiedCond1){
+            if(breakLoop){
                 break;
             }
         }
-        if(satisfiedCond1){
+
+        bool notSatCond2 = false;
+        if(notSatCond1){
             output = "NO";
         }else{
             getFollow();
-
+            for(auto &i : nonTerminals){
+                if(find(firstSet[i].begin(), firstSet[i].end(), "#") != firstSet[i].end()){
+                    notSatCond2 = checkIntersection(firstSet[i], followSet[i]);
+                }
+                if(notSatCond2){
+                    break;
+                }
+            }
+            if(notSatCond2){
+                output = "NO";
+            }else{
+                output = "YES";
+            }
         }
 
     }
