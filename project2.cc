@@ -220,11 +220,7 @@ void isReachable(bool *reachable, vector<pair<string, vector<string>>> ruleGen) 
 vector<pair<string, vector<string>>> ruleGen;
 vector<pair<string, vector<string>>> useful;
 void getUseless(){
-    //bool generateSymbols[symbolSize];
     bool reachableSymbols[symbolSize];
-    /*for (int i = 0; i < symbolSize; i++) {
-        generateSymbols[i] = find(terminals.begin(), terminals.end(), symbols[i]) != terminals.end();
-    }*/
     generateSymbols[0] = true;
 
     //get generate array
