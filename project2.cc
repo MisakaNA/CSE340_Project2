@@ -210,7 +210,6 @@ void isReachable(bool *reachable, vector<pair<string, vector<string>>> ruleGen) 
                             reachable[tempIdx] = true;
                             isChanged = true;
                         }
-                    //}
                 }
             }
         }
@@ -227,6 +226,8 @@ void getUseless(){
         generateSymbols[i] = find(terminals.begin(), terminals.end(), symbols[i]) != terminals.end();
     }
     generateSymbols[0] = true;
+
+    //get generate array
     isGenerate(generateSymbols);
     for(auto &i : ruleList){
         for(auto &j : i.second){
@@ -243,6 +244,7 @@ void getUseless(){
         if(gen){
             ruleGen.emplace_back(i.first, i.second);
         }else{
+            //if the rule is not generating it will make the rule list unpridictive
             predParser = false;
         }
     }
@@ -252,6 +254,8 @@ void getUseless(){
         for(int i = 0; i < symbolSize; i++){
             reachableSymbols[i] = i == index;
         }
+
+        //get reachable array
         isReachable(reachableSymbols, ruleGen);
         for(auto &i : ruleGen){
             for(auto &j : i.second){
@@ -266,8 +270,10 @@ void getUseless(){
             }
 
             if(rea){
+                //all reachable rules from ruleGen is useful
                 useful.emplace_back(i.first, i.second);
             }else{
+                //if the rule is unreachable it will make the rule list unpridictive
                 predParser = false;
             }
         }
@@ -276,6 +282,7 @@ void getUseless(){
 
 // Task 2
 void RemoveUselessSymbols() {
+    //update useful
     getUseless();
     if(!useful.empty()){
         string output;
@@ -299,9 +306,10 @@ void RemoveUselessSymbols() {
 
 
 map<string, vector<string>> firstSet;
-bool hasEpsilon = false;
+
 void getFirst(){
     map<string, vector<string>> firstPrev;
+    bool hasEpsilon = false;
     string ruleName;
     vector<string> ruleBody;
     bool isChanged;
@@ -367,22 +375,6 @@ void CalculateFirstSets()
     vector<string> tempTerminals = terminals;
     tempTerminals.insert(tempTerminals.begin(), "#");
 
-    /*for(auto &i : firstSet){
-        int trackComma = 0;
-        output += "FIRST(" + i.first + ") = { ";
-        for(auto &j : tempTerminals) {
-            if(find(i.second.begin(), i.second.end(), j) != i.second.end()) {
-                trackComma++;
-                if(trackComma != i.second.size()){
-                    output += j + ", ";
-                }else{
-                    output += j;
-                }
-
-            }
-        }
-        output += " }\n";
-    }*/
     for(auto &i : nonTerminals){
         int trackComma = 0;
         output += "FIRST(" + i + ") = { ";
@@ -402,10 +394,9 @@ void CalculateFirstSets()
 }
 
 map<string, vector<string>> followSet;
-bool epsilon = false;
-bool tracker = false;
 void getFollow(){
     bool isChanged;
+    bool epsilon = false;
     string ruleName;
     vector<string> ruleBody;
     //rule 1
@@ -483,7 +474,6 @@ void getFollow(){
                                     isChanged = true;
                                 }
                             }
-
                         }
                     }
                 }
@@ -519,15 +509,89 @@ void CalculateFollowSets()
     cout << output << endl;
 }
 
+vector<string> ruleFirstSet(vector<string> ruleBody) {
+    vector<string> result;
+    bool hasEpsilon = true;
+    if (ruleBody.empty()) {
+        result.emplace_back("#");
+    }else{
+        for(auto &i : ruleBody){
+            hasEpsilon = true;
+            if(find(firstSet[i].begin(), firstSet[i].end(), "#") == firstSet[i].end()){
+                hasEpsilon = false;
+            }
+            for(auto &j : firstSet[i]){
+                if(find(result.begin(), result.end(), j) == result.end()){
+                    if(j != "#"){
+                        result.push_back(j);
+                    }
+                }
+            }
+            if(!hasEpsilon){
+                break;
+            }
+        }
+        if(hasEpsilon){
+            result.emplace_back("#");
+        }
+    }
+    return result;
+}
+
+bool checkIntersection(vector<string> vec1, vector<string> vec2){
+    for(auto &i : vec1){
+        if(find(vec2.begin(), vec2.end(), i) != vec2.end()){
+            return true;
+        }
+    }
+    return false;
+}
 // Task 5
 void CheckIfGrammarHasPredictiveParser()
 {
+    string output;
+    //update global predParser value by calling getUseless
     getUseless();
-    if(predParser){
-        cout << "YES";
+    if(!predParser){
+        output = "NO";
     }else{
-        cout << "NO";
+        //check condition 1 first
+        getFirst();
+        bool satisfiedCond1 = true;
+        //add first set of terminals and epsilon to firstSet for convenient
+        for(auto &i : terminals){
+            firstSet[i].push_back(i);
+        }
+        firstSet["#"].push_back("#");
+
+
+        for(int i = 0; i < ruleList.size(); i++){
+            //get followed rules
+            for(int j = i + 1; j < ruleList.size(); j++){
+                //find similar declared rules
+                if(ruleList[i].first == ruleList[j].first){
+                    vector<string> result_i = ruleFirstSet(ruleList[i].second);
+                    vector<string> result_j = ruleFirstSet(ruleList[j].second);
+                    //check intersection
+                    satisfiedCond1 = checkIntersection(result_i, result_j);
+                }
+                if(satisfiedCond1){
+                    break;
+                }
+            }
+            if(satisfiedCond1){
+                break;
+            }
+        }
+        if(satisfiedCond1){
+            output = "NO";
+        }else{
+            getFollow();
+
+        }
+
     }
+    cout << output;
 }
 
 
