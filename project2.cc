@@ -178,6 +178,7 @@ void isGenerate(bool *useless){
                 int index = distance(symbols, find(symbols, symbols + symbolSize, j));
                 if (useless[index]) {
                     gen = true;
+                //}else if(){
                 } else {
                     //one ungenerating element means whole rule ungenerating
                     gen = false;
@@ -206,11 +207,16 @@ void isReachable(bool *reachable, vector<pair<string, vector<string>>> ruleGen) 
             int index = distance(symbols, find(symbols, symbols + symbolSize, i.first));
             if (reachable[index]) {
                 for (auto &j : i.second) {
-                    int tempIdx = distance(symbols, find(symbols, symbols + symbolSize, j));
-                    if(!reachable[tempIdx]){
-                        reachable[tempIdx] = true;
-                        isChanged = true;
-                    }
+                    //if(find(terminals.begin(), terminals.end(), j) == terminals.end()){
+                        int tempIdx = distance(symbols, find(symbols, symbols + symbolSize, j));
+                        if(!reachable[tempIdx]){
+                            reachable[tempIdx] = true;
+                            isChanged = true;
+                        }
+                    //}else{
+                       // break;
+                    //}
+
                 }
             }
         }
@@ -226,16 +232,21 @@ void getUseless(){
     //get generate array
     isGenerate(generateSymbols);
     for(auto &i : ruleList){
-        for(auto &j : i.second){
-            int idx = distance(symbols, find(symbols, symbols + symbolSize, j));
-            if(generateSymbols[idx]){
-                gen = true;
-            }else{
-                //one ungenerating element means whole rule ungenerating
-                gen = false;
-                break;
+        if(!i.second.empty()){
+            for(auto &j : i.second){
+                int idx = distance(symbols, find(symbols, symbols + symbolSize, j));
+                if(generateSymbols[idx]) {
+                    gen = true;
+                }else{
+                    //one ungenerating element means whole rule ungenerating
+                    gen = false;
+                    break;
+                }
             }
+        } else{
+            gen = true;
         }
+
 
         if(gen){
             ruleGen.emplace_back(i.first, i.second);
