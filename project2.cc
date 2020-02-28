@@ -268,7 +268,7 @@ void getUseless(){
         isReachable(reachableSymbols, ruleGen);
         for(auto &i : ruleGen){
             for(auto &j : i.second){
-                int idx = distance(symbols, find(symbols, symbols + symbolSize, j));
+                int idx = distance(symbols, find(symbols, symbols + symbolSize, i.first));
                 if(reachableSymbols[idx]){
                     rea = true;
                 }else{
