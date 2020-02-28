@@ -20,7 +20,6 @@ vector<string> lhs;
 vector<string> terminals;
 vector<string> nonTerminals;
 string symbols[100];
-bool generateSymbols[100];
 int symbolSize = 0;
 bool hasUseless = true;
 LexicalAnalyzer lexer;
@@ -143,12 +142,12 @@ void ReadGrammar()
     symbols[1] = "$";
     symbolSize += 2;
     for(auto &i : terminals){
-        symbols[symbolSize] = i;
-        generateSymbols[symbolSize++] = true;
+        symbols[symbolSize++] = i;
+        //generateSymbols[symbolSize++] = true;
     }
     for(auto &i : nonTerminals) {
-        symbols[symbolSize] = i;
-        generateSymbols[symbolSize++] = false;
+        symbols[symbolSize++] = i;
+        //generateSymbols[symbolSize++] = false;
     }
 }
 
@@ -226,16 +225,20 @@ void isReachable(bool *reachable, vector<pair<string, vector<string>>> ruleGen) 
 vector<pair<string, vector<string>>> ruleGen;
 vector<pair<string, vector<string>>> useful;
 void getUseless(){
+    bool generateSymbols[symbolSize];
     bool reachableSymbols[symbolSize];
+    for (int i = 0; i < symbolSize; i++) {
+        generateSymbols[i] = find(terminals.begin(), terminals.end(), symbols[i]) != terminals.end();
+    }
     generateSymbols[0] = true;
 
     //get generate array
     isGenerate(generateSymbols);
     for(auto &i : ruleList){
-        if(!i.second.empty()){
-            for(auto &j : i.second){
+        if(!i.second.empty()) {
+            for (auto &j : i.second) {
                 int idx = distance(symbols, find(symbols, symbols + symbolSize, j));
-                if(generateSymbols[idx]) {
+                if (generateSymbols[idx]) {
                     gen = true;
                 }else{
                     //one ungenerating element means whole rule ungenerating
@@ -243,10 +246,9 @@ void getUseless(){
                     break;
                 }
             }
-        } else{
+        }else{
             gen = true;
         }
-
 
         if(gen){
             ruleGen.emplace_back(i.first, i.second);
