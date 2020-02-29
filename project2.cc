@@ -317,7 +317,6 @@ void RemoveUselessSymbols() {
 map<string, vector<string>> firstSet;
 
 void getFirst(){
-    map<string, vector<string>> firstPrev;
     bool hasEpsilon = false;
     string ruleName;
     vector<string> ruleBody;
@@ -494,6 +493,7 @@ void getFollow(){
 void CalculateFollowSets()
 {
     getFirst();
+
     getFollow();
     string output;
     vector<string> tempTerminal = terminals;
