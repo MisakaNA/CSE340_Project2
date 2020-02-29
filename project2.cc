@@ -411,10 +411,11 @@ void getFollow(){
     followSet[nonTerminals[0]].push_back("$");
     /*do{
         isChanged = false;
+        */
         for (auto & i : ruleList) {
             ruleName = i.first;
             ruleBody = i.second;
-
+/*
             for(int i = 0; i < ruleBody.size(); i++){
                 if(find(nonTerminals.begin(), nonTerminals.end(), ruleBody[i]) != nonTerminals.end()){
                     //get the following body after first element
@@ -489,24 +490,32 @@ void getFollow(){
         }
     } while(isChanged); */
             //loop body
-    for(int j = 0; j < ruleBody.size(); j++){
-        if(find(nonTerminals.begin(), nonTerminals.end(), ruleBody[j]) != nonTerminals.end()) {
-            epsilon = false;
-            if (find(firstSet[ruleBody[j+1]].begin(), firstSet[ruleBody[j+1]].end(), "#") != firstSet[ruleBody[j+1]].end()) {
-                epsilon = true;
-            }
-            for(auto &k : firstSet[ruleBody[j+1]]){
-                if(find(followSet[ruleBody[j]].begin(), followSet[ruleBody[j]].end(), k) == followSet[ruleBody[j]].end()){
-                    if(k != "#"){
-                        followSet[ruleBody[j]].push_back(k);
+            for (int j = 0; j < ruleBody.size(); j++) {
+                if (j != ruleBody.size() - 1) {
+                    if (find(nonTerminals.begin(), nonTerminals.end(), ruleBody[j]) != nonTerminals.end()) {
+
+                        for(int k = j+1; k < ruleBody.size(); k++){
+                            epsilon = false;
+                            if (find(firstSet[ruleBody[k]].begin(), firstSet[ruleBody[k]].end(), "#") !=
+                                firstSet[ruleBody[k]].end()) {
+                                epsilon = true;
+                            }
+                            for (auto &l : firstSet[ruleBody[k]]) {
+                                if (find(followSet[ruleBody[j]].begin(), followSet[ruleBody[j]].end(), l) ==
+                                    followSet[ruleBody[j]].end()) {
+                                    if (l != "#") {
+                                        followSet[ruleBody[j]].push_back(l);
+                                    }
+                                }
+                            }
+                            if (!epsilon) {
+                                break;
+                            }
+                        }
                     }
                 }
             }
-            if(!epsilon){
-                break;
-            }
         }
-    }
     epsilon = true;
     do{
         isChanged = false;
@@ -515,10 +524,11 @@ void getFollow(){
             ruleBody = i.second;
             //loop body
             for(int j = 0; j < ruleBody.size(); j++) {
+                epsilon = true;
                 if (find(nonTerminals.begin(), nonTerminals.end(), ruleBody[j]) != nonTerminals.end()) {
                     if(j != ruleBody.size() - 1){
                         for(int k = j+1; k < ruleBody.size(); k++) {
-                            if(find(firstSet[ruleBody[j+1]].begin(), firstSet[ruleBody[j+1]].end(), "#") == firstSet[ruleBody[j+1]].end()){
+                            if(find(firstSet[ruleBody[k]].begin(), firstSet[ruleBody[k]].end(), "#") == firstSet[ruleBody[k]].end()){
                                 epsilon = false;
                                 break;
                             }
@@ -530,8 +540,6 @@ void getFollow(){
                                     isChanged = true;
                                 }
                             }
-                        }else{
-                            break;
                         }
                     }else{
                         for(auto &k : followSet[i.first]){
