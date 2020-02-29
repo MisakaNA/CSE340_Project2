@@ -377,6 +377,7 @@ void getFirst(){
 void CalculateFirstSets()
 {
     getFirst();
+
     string output;
 
     vector<string> tempTerminals = terminals;
@@ -403,17 +404,17 @@ void CalculateFirstSets()
 map<string, vector<string>> followSet;
 void getFollow(){
     bool isChanged;
-    bool epsilon = false;
+    bool epsilon;
     string ruleName;
     vector<string> ruleBody;
     //rule 1
     followSet[nonTerminals[0]].push_back("$");
-    do{
+    /*do{
         isChanged = false;
-        for (auto &m : ruleList) {
-            ruleName = m.first;
-            ruleBody = m.second;
-            //loop body
+        for (auto & i : ruleList) {
+            ruleName = i.first;
+            ruleBody = i.second;
+
             for(int i = 0; i < ruleBody.size(); i++){
                 if(find(nonTerminals.begin(), nonTerminals.end(), ruleBody[i]) != nonTerminals.end()){
                     //get the following body after first element
@@ -486,13 +487,75 @@ void getFollow(){
                 }
             }
         }
-    }while(isChanged);
+    } while(isChanged); */
+            //loop body
+    for(int j = 0; j < ruleBody.size(); j++){
+        if(find(nonTerminals.begin(), nonTerminals.end(), ruleBody[j]) != nonTerminals.end()) {
+            epsilon = false;
+            if (find(firstSet[ruleBody[j+1]].begin(), firstSet[ruleBody[j+1]].end(), "#") != firstSet[ruleBody[j+1]].end()) {
+                epsilon = true;
+            }
+            for(auto &k : firstSet[ruleBody[j+1]]){
+                if(find(followSet[ruleBody[j]].begin(), followSet[ruleBody[j]].end(), k) == followSet[ruleBody[j]].end()){
+                    if(k != "#"){
+                        followSet[ruleBody[j]].push_back(k);
+                    }
+                }
+            }
+            if(!epsilon){
+                break;
+            }
+        }
+    }
+    epsilon = true;
+    do{
+        isChanged = false;
+        for (auto & i : ruleList) {
+            ruleName = i.first;
+            ruleBody = i.second;
+            //loop body
+            for(int j = 0; j < ruleBody.size(); j++) {
+                if (find(nonTerminals.begin(), nonTerminals.end(), ruleBody[j]) != nonTerminals.end()) {
+                    if(j != ruleBody.size() - 1){
+                        for(int k = j+1; k < ruleBody.size(); k++) {
+                            if(find(firstSet[ruleBody[j+1]].begin(), firstSet[ruleBody[j+1]].end(), "#") == firstSet[ruleBody[j+1]].end()){
+                                epsilon = false;
+                                break;
+                            }
+                        }
+                        if(epsilon){
+                            for(auto &k : followSet[i.first]){
+                                if(find(followSet[ruleBody[j]].begin(), followSet[ruleBody[j]].end(), k) == followSet[ruleBody[j]].end()){
+                                    followSet[ruleBody[j]].push_back(k);
+                                    isChanged = true;
+                                }
+                            }
+                        }else{
+                            break;
+                        }
+                    }else{
+                        for(auto &k : followSet[i.first]){
+                            if(find(followSet[ruleBody[j]].begin(), followSet[ruleBody[j]].end(), k) == followSet[ruleBody[j]].end()){
+                                followSet[ruleBody[j]].push_back(k);
+                                isChanged = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    } while(isChanged);
 }
 
 // Task 4
 void CalculateFollowSets()
 {
     getFirst();
+    for(auto &i : terminals){
+        firstSet[i].push_back(i);
+    }
+    firstSet["#"].push_back("#");
 
     getFollow();
     string output;
