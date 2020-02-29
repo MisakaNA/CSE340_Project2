@@ -263,7 +263,6 @@ void getUseless(){
         for(int i = 0; i < symbolSize; i++){
             reachableSymbols[i] = i == index;
         }
-
         //get reachable array
         isReachable(reachableSymbols, ruleGen);
         for(auto &i : ruleGen){
@@ -277,7 +276,6 @@ void getUseless(){
                     break;
                 }
             }
-
             if(rea){
                 //all reachable rules from ruleGen is useful
                 useful.emplace_back(i.first, i.second);
@@ -377,9 +375,7 @@ void getFirst(){
 void CalculateFirstSets()
 {
     getFirst();
-
     string output;
-
     vector<string> tempTerminals = terminals;
     tempTerminals.insert(tempTerminals.begin(), "#");
 
@@ -409,124 +405,44 @@ void getFollow(){
     vector<string> ruleBody;
     //rule 1
     followSet[nonTerminals[0]].push_back("$");
-    /*do{
-        isChanged = false;
-        */
-        for (auto & i : ruleList) {
-            ruleName = i.first;
-            ruleBody = i.second;
-/*
-            for(int i = 0; i < ruleBody.size(); i++){
-                if(find(nonTerminals.begin(), nonTerminals.end(), ruleBody[i]) != nonTerminals.end()){
-                    //get the following body after first element
-                    vector<string> followVec = vector<string> (ruleBody.begin() + i + 1, ruleBody.end());
-                    //if end of line
-                    if(followVec.empty()){
-                        //rule 2 A-> xxx B
-                        for(auto &j : followSet[ruleName]){
-                            if(find(followSet[ruleBody[i]].begin(), followSet[ruleBody[i]].end(), j) == followSet[ruleBody[i]].end()){
-                                followSet[ruleBody[i]].push_back(j);
-                                isChanged = true;
-                            }
-                        }
-                    }else{
-                        //regular possibilities
-                        for(auto &j : followVec){
-                            epsilon = false;
-                            // A -> B a;
-                            if(find(terminals.begin(), terminals.end(), j) != terminals.end()){
-                                if(find(followSet[ruleBody[i]].begin(), followSet[ruleBody[i]].end(), j) == followSet[ruleBody[i]].end()){
-                                    followSet[ruleBody[i]].push_back(j);
-                                    isChanged = true;
-                                }
-                                break;
-                            }else{
-                                //rule 4 and 5  A -> B C D
-                                for(auto &l : firstSet[j]){
-                                    if(l != "#"){
-                                        if(find(followSet[ruleBody[i]].begin(), followSet[ruleBody[i]].end(), l) == followSet[ruleBody[i]].end()){
-                                            followSet[ruleBody[i]].push_back(l);
-                                            isChanged = true;
-                                        }
-                                    }else{
-                                        epsilon = true;
-                                    }
-                                }
-                                if(!epsilon){
-                                    break;
-                                }
+    //applying rule 4 and 5 to all rules once
+    for (auto & i : ruleList) {
+        ruleName = i.first;
+        ruleBody = i.second;
+        for (int j = 0; j < ruleBody.size(); j++) {
+            if (find(nonTerminals.begin(), nonTerminals.end(), ruleBody[j]) != nonTerminals.end()) {
+                for(int k = j+1; k < ruleBody.size(); k++){
+                    epsilon = false;
+                    if (find(firstSet[ruleBody[k]].begin(), firstSet[ruleBody[k]].end(), "#") !=
+                        firstSet[ruleBody[k]].end()) {
+                        epsilon = true;
+                    }
+                    for (auto &l : firstSet[ruleBody[k]]) {
+                        if (find(followSet[ruleBody[j]].begin(), followSet[ruleBody[j]].end(), l) ==
+                            followSet[ruleBody[j]].end()) {
+                            if (l != "#") {
+                                followSet[ruleBody[j]].push_back(l);
                             }
                         }
                     }
-                    //rule 3 A -> xxxxx B a b c d e    epsilon belongs to abcde
-                    if(epsilon){
-                        // A -> B a b c d e    epsilon belongs to abcde
-                        if(find(nonTerminals.begin(), nonTerminals.end(), ruleBody[0]) != nonTerminals.end()){
-                            for(auto &j : followSet[ruleName]){
-                                if(find(followSet[ruleBody[0]].begin(), followSet[ruleBody[0]].end(), j) == followSet[ruleBody[0]].end()){
-                                    followSet[ruleBody[0]].push_back(j);
-                                    isChanged = true;
-                                }
-                            }
-                        }else{
-                            //A -> xxxxx B a b c d e    epsilon belongs to abcde
-                            string temp;
-                            for(auto &j : ruleBody){
-                                if(find(nonTerminals.begin(), nonTerminals.end(), j) != nonTerminals.end()){
-                                    temp = j;
-                                    break;
-                                }
-                            }
-                            for(auto &j : followSet[ruleName]){
-                                if(find(followSet[temp].begin(), followSet[temp].end(), j) == followSet[temp].end()){
-                                    followSet[temp].push_back(j);
-                                    isChanged = true;
-                                }
-                            }
-                        }
+                    if (!epsilon) {
+                        break;
                     }
                 }
             }
         }
-    } while(isChanged); */
-            //loop body
-            for (int j = 0; j < ruleBody.size(); j++) {
-                if (j != ruleBody.size() - 1) {
-                    if (find(nonTerminals.begin(), nonTerminals.end(), ruleBody[j]) != nonTerminals.end()) {
-
-                        for(int k = j+1; k < ruleBody.size(); k++){
-                            epsilon = false;
-                            if (find(firstSet[ruleBody[k]].begin(), firstSet[ruleBody[k]].end(), "#") !=
-                                firstSet[ruleBody[k]].end()) {
-                                epsilon = true;
-                            }
-                            for (auto &l : firstSet[ruleBody[k]]) {
-                                if (find(followSet[ruleBody[j]].begin(), followSet[ruleBody[j]].end(), l) ==
-                                    followSet[ruleBody[j]].end()) {
-                                    if (l != "#") {
-                                        followSet[ruleBody[j]].push_back(l);
-                                    }
-                                }
-                            }
-                            if (!epsilon) {
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    epsilon = true;
+    }
+    //applying rule 2 and 3 by loop
     do{
         isChanged = false;
         for (auto & i : ruleList) {
             ruleName = i.first;
             ruleBody = i.second;
-            //loop body
             for(int j = 0; j < ruleBody.size(); j++) {
                 epsilon = true;
                 if (find(nonTerminals.begin(), nonTerminals.end(), ruleBody[j]) != nonTerminals.end()) {
                     if(j != ruleBody.size() - 1){
+
                         for(int k = j+1; k < ruleBody.size(); k++) {
                             if(find(firstSet[ruleBody[k]].begin(), firstSet[ruleBody[k]].end(), "#") == firstSet[ruleBody[k]].end()){
                                 epsilon = false;
@@ -552,7 +468,6 @@ void getFollow(){
                 }
             }
         }
-
     } while(isChanged);
 }
 
@@ -560,6 +475,7 @@ void getFollow(){
 void CalculateFollowSets()
 {
     getFirst();
+    //add first set of terminals and epsilon to firstSet for convenient
     for(auto &i : terminals){
         firstSet[i].push_back(i);
     }
