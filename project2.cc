@@ -315,22 +315,30 @@ void getUseless(){
         }
     }
 
+    bool gen = false;
     for(auto &i : ruleList){
         for (auto &j : i.second) {
             int index = distance(symbols, find(symbols, symbols + symbolSize, j));
             if(!i.second.empty()){
                 if (generateArr[index]) {
-                    ruleGen.emplace_back(i.first, i.second);
+                    gen = true;
                 }else{
                     //one ungenerating element means whole rule ungenerating
+                    gen = false;
                     hasUseless = false;
                     break;
                 }
             } else {
-                ruleGen.emplace_back(i.first, i.second);
+                gen = true;
             }
         }
+
+        if(gen){
+            ruleGen.emplace_back(i.first, i.second);
+        }
     }
+
+
 
     if(!ruleGen.empty() && ruleGen[0].first == ruleList[0].first){
         int index = distance(symbols, find(symbols, symbols + symbolSize, ruleGen[0].first));
@@ -341,7 +349,7 @@ void getUseless(){
         isChanged = true;
         while(isChanged){
             isChanged = false;
-            for (auto &i : ruleList) {
+            for (auto &i : ruleGen) {
                 int index2 = distance(symbols, find(symbols, symbols + symbolSize, i.first));
                 if (reachableArr[index2]) {
                     for (auto &j : i.second) {
@@ -352,6 +360,23 @@ void getUseless(){
                         }
                     }
                 }
+            }
+        }
+        bool rea = true;
+        for(auto &i : ruleGen){
+            for (auto &j : i.second) {
+                int index2 = distance(symbols, find(symbols, symbols + symbolSize, i.first));
+                if(reachableArr[index2]){
+                    rea = true;
+                }else{
+                    rea = false;
+                    hasUseless = false;
+                    break;
+                }
+            }
+
+            if(rea){
+                useful.emplace_back(i.first, i.second);
             }
         }
     }
