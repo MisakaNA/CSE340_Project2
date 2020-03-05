@@ -166,7 +166,7 @@ void printTerminalsAndNoneTerminals() {
 }
 
 //bool gen = false;
-void isGenerate(bool *generate){
+/*void isGenerate(bool *generate){
     bool isChanged;
     do {
         isChanged = false;
@@ -201,7 +201,6 @@ void isGenerate(bool *generate){
 
 void isReachable(bool *reachable, vector<pair<string, vector<string>>> ruleGen) {
     bool isChanged = true;
-    //do{
     while(isChanged){
         isChanged = false;
         for (auto &i : ruleGen) {
@@ -217,13 +216,11 @@ void isReachable(bool *reachable, vector<pair<string, vector<string>>> ruleGen) 
             }
         }
     }
-
-    //}while(isChanged);
-}
+}*/
 
 vector<pair<string, vector<string>>> ruleGen;
 vector<pair<string, vector<string>>> useful;
-bool rea = true;
+//bool rea = true;
 void getUseless(){
     /*bool generateSymbols[symbolSize];
     bool reachableSymbols[symbolSize];
@@ -285,17 +282,75 @@ void getUseless(){
             }
         }
     }*/
-    vector<bool> generateArr(symbolSize, false);
-    vector<bool> reachableArr(symbolSize, false);
+    //vector<bool> generateArr(symbolSize, false);
+    //vector<bool> reachableArr(symbolSize, false);
+    bool generateArr[symbolSize];
+    bool reachableArr[symbolSize];
     bool isChanged = true;
+
+    for (int i = 0; i < symbolSize; i++) {
+        generateArr[i] = find(terminals.begin(), terminals.end(), symbols[i]) != terminals.end();
+    }
+    generateArr[0] = true;
+
     while(isChanged){
-        isChanged = true;
+        isChanged = false;
         for(auto &i : ruleList){
             bool gen = true;
             for(auto &j : i.second){
                 int index = distance(symbols, find(symbols, symbols + symbolSize, j));
-                if(generateArr[index]){
+                if(!generateArr[index]) {
+                    gen = false;
+                    break;
+                }
+            }
 
+            if(i.second.empty() || gen){
+                int index = distance(symbols, find(symbols, symbols + symbolSize, i.first));
+                if(!generateArr[index]){
+                    generateArr[index] = true;
+                    isChanged = true;
+                }
+            }
+        }
+    }
+
+    for(auto &i : ruleList){
+        for (auto &j : i.second) {
+            int index = distance(symbols, find(symbols, symbols + symbolSize, j));
+            if(!i.second.empty()){
+                if (generateArr[index]) {
+                    ruleGen.emplace_back(i.first, i.second);
+                }else{
+                    //one ungenerating element means whole rule ungenerating
+                    hasUseless = false;
+                    break;
+                }
+            } else {
+                ruleGen.emplace_back(i.first, i.second);
+            }
+        }
+    }
+
+    if(!ruleGen.empty() && ruleGen[0].first == ruleList[0].first){
+        int index = distance(symbols, find(symbols, symbols + symbolSize, ruleGen[0].first));
+        for(int i = 0; i < symbolSize; i++){
+            reachableArr[i] = i == index;
+        }
+
+        isChanged = true;
+        while(isChanged){
+            isChanged = false;
+            for (auto &i : ruleList) {
+                int index2 = distance(symbols, find(symbols, symbols + symbolSize, i.first));
+                if (reachableArr[index2]) {
+                    for (auto &j : i.second) {
+                        int tempIdx = distance(symbols, find(symbols, symbols + symbolSize, j));
+                        if(!reachableArr[tempIdx]){
+                            reachableArr[tempIdx] = true;
+                            isChanged = true;
+                        }
+                    }
                 }
             }
         }
@@ -426,7 +481,7 @@ void getFollow(){
         ruleBody = i.second;
         for (int j = 0; j < ruleBody.size(); j++) {
             if (find(nonTerminals.begin(), nonTerminals.end(), ruleBody[j]) != nonTerminals.end()) {
-                for(int k = j+1; k < ruleBody.size(); k++){
+                for(int k = j + 1; k < ruleBody.size(); k++){
                     epsilon = false;
                     if (find(firstSet[ruleBody[k]].begin(), firstSet[ruleBody[k]].end(), "#") !=
                         firstSet[ruleBody[k]].end()) {
@@ -457,8 +512,7 @@ void getFollow(){
                 epsilon = true;
                 if (find(nonTerminals.begin(), nonTerminals.end(), ruleBody[j]) != nonTerminals.end()) {
                     if(j != ruleBody.size() - 1){
-
-                        for(int k = j+1; k < ruleBody.size(); k++) {
+                        for(int k = j + 1; k < ruleBody.size(); k++) {
                             if(find(firstSet[ruleBody[k]].begin(), firstSet[ruleBody[k]].end(), "#") == firstSet[ruleBody[k]].end()){
                                 epsilon = false;
                                 break;
