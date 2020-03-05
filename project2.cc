@@ -165,17 +165,18 @@ void printTerminalsAndNoneTerminals() {
     cout << output << endl;
 }
 
-bool gen = false;
-void isGenerate(bool *useless){
+//bool gen = false;
+void isGenerate(bool *generate){
     bool isChanged;
     do {
         isChanged = false;
         for (auto &i : ruleList) {
             //go through rule body vector
+
             for (auto &j : i.second) {
                 //check is there any element not true in usefulSymbol
                 int index = distance(symbols, find(symbols, symbols + symbolSize, j));
-                if (useless[index]) {
+                if (generate[index]) {
                     gen = true;
                 //}else if(){
                 } else {
@@ -188,8 +189,8 @@ void isGenerate(bool *useless){
             //check if all generating or empty (empty means there is only one epsilon) and sign to true in usefulSymbol
             if (i.second.empty() || gen) {
                 int index = distance(symbols, find(symbols, symbols + symbolSize, i.first));
-                if(!useless[index]){
-                    useless[index] = true;
+                if(!generate[index]){
+                    generate[index] = true;
                     isChanged = true;
                 }
             }
@@ -197,35 +198,34 @@ void isGenerate(bool *useless){
     }while(isChanged);
 }
 
-bool rea = true;
+
 void isReachable(bool *reachable, vector<pair<string, vector<string>>> ruleGen) {
-    bool isChanged;
-    do{
+    bool isChanged = true;
+    //do{
+    while(isChanged){
         isChanged = false;
         for (auto &i : ruleGen) {
             int index = distance(symbols, find(symbols, symbols + symbolSize, i.first));
             if (reachable[index]) {
                 for (auto &j : i.second) {
-                    //if(find(terminals.begin(), terminals.end(), j) == terminals.end()){
-                        int tempIdx = distance(symbols, find(symbols, symbols + symbolSize, j));
-                        if(!reachable[tempIdx]){
-                            reachable[tempIdx] = true;
-                            isChanged = true;
-                        }
-                    //}else{
-                       // break;
-                    //}
-
+                    int tempIdx = distance(symbols, find(symbols, symbols + symbolSize, j));
+                    if(!reachable[tempIdx]){
+                        reachable[tempIdx] = true;
+                        isChanged = true;
+                    }
                 }
             }
         }
-    }while(isChanged);
+    }
+
+    //}while(isChanged);
 }
 
 vector<pair<string, vector<string>>> ruleGen;
 vector<pair<string, vector<string>>> useful;
+bool rea = true;
 void getUseless(){
-    bool generateSymbols[symbolSize];
+    /*bool generateSymbols[symbolSize];
     bool reachableSymbols[symbolSize];
     for (int i = 0; i < symbolSize; i++) {
         generateSymbols[i] = find(terminals.begin(), terminals.end(), symbols[i]) != terminals.end();
@@ -258,7 +258,7 @@ void getUseless(){
         }
     }
 
-    if(!ruleGen.empty()){
+    if(!ruleGen.empty() && ruleGen[0].first == ruleList[0].first){
         int index = distance(symbols, find(symbols, symbols + symbolSize, ruleList[0].first));
         for(int i = 0; i < symbolSize; i++){
             reachableSymbols[i] = i == index;
@@ -282,6 +282,21 @@ void getUseless(){
             }else{
                 //if the rule is unreachable it will make the rule list unpridictive
                 hasUseless = false;
+            }
+        }
+    }*/
+    vector<bool> generateArr(symbolSize, false);
+    vector<bool> reachableArr(symbolSize, false);
+    bool isChanged = true;
+    while(isChanged){
+        isChanged = true;
+        for(auto &i : ruleList){
+            bool gen = true;
+            for(auto &j : i.second){
+                int index = distance(symbols, find(symbols, symbols + symbolSize, j));
+                if(generateArr[index]){
+
+                }
             }
         }
     }
