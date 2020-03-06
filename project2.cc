@@ -361,8 +361,7 @@ void getFollow(){
                         epsilon = true;
                     }
                     for (auto &l : firstSet[ruleBody[k]]) {
-                        if (find(followSet[ruleBody[j]].begin(), followSet[ruleBody[j]].end(), l) ==
-                            followSet[ruleBody[j]].end()) {
+                        if (find(followSet[ruleBody[j]].begin(), followSet[ruleBody[j]].end(), l) == followSet[ruleBody[j]].end()) {
                             if (l != "#") {
                                 followSet[ruleBody[j]].push_back(l);
                             }
@@ -566,7 +565,7 @@ void CheckIfGrammarHasPredictiveParser()
     }else{
         //check condition 1 first
         getFirst();
-        bool notSatCond1 = true;
+        bool notSatCond1 = false;
         bool breakLoop = false;
         //add first set of terminals and epsilon to firstSet for convenient
         for(auto &i : terminals){
@@ -589,7 +588,7 @@ void CheckIfGrammarHasPredictiveParser()
                     }
                 }
             }
-            if(breakLoop){
+            if(breakLoop) {
                 break;
             }
         }
